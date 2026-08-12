@@ -33,6 +33,8 @@ targets:
         product: Routing
       - package: Visor
         product: Simulation
+      - package: Visor
+        product: Transport
     info:
       path: Info.plist
       properties:

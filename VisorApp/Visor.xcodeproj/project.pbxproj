@@ -12,6 +12,7 @@
 		53D76DB41AC75917F9B9B8FE /* RideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAB6CB3F22D201DC4CDDCAFA /* RideView.swift */; };
 		6394A179A493CBF8C4076A79 /* LocationSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB048EBDCB7887FDEFD89244 /* LocationSource.swift */; };
 		675387AC208A04C5B9445FB7 /* VisorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CA881968F005F08703ABC96 /* VisorApp.swift */; };
+		706683791A95837F5D535F7B /* Transport in Frameworks */ = {isa = PBXBuildFile; productRef = 40E0518FE2985F781332A3FC /* Transport */; };
 		7AFED445BC34407D15AD186A /* Simulation in Frameworks */ = {isa = PBXBuildFile; productRef = A2127D4DF9B24CCAA1E83661 /* Simulation */; };
 		B53487AB725C2EB4F9848798 /* Geometry in Frameworks */ = {isa = PBXBuildFile; productRef = 635FB2F076BF92B66C9425B4 /* Geometry */; };
 		B6A469C2843E9A1D7ABF67A8 /* Guidance in Frameworks */ = {isa = PBXBuildFile; productRef = 74CD2E9D8906BAD1ECD726A6 /* Guidance */; };
@@ -45,6 +46,7 @@
 				B6A469C2843E9A1D7ABF67A8 /* Guidance in Frameworks */,
 				EAA84C4A522BE5AD19D0D80A /* Routing in Frameworks */,
 				7AFED445BC34407D15AD186A /* Simulation in Frameworks */,
+				706683791A95837F5D535F7B /* Transport in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -128,6 +130,7 @@
 				74CD2E9D8906BAD1ECD726A6 /* Guidance */,
 				0887B3DE77BA88070BBCF9F1 /* Routing */,
 				A2127D4DF9B24CCAA1E83661 /* Simulation */,
+				40E0518FE2985F781332A3FC /* Transport */,
 			);
 			productName = Visor;
 			productReference = DC1A5161253B3749862FF31E /* Visor.app */;
@@ -385,6 +388,10 @@
 		0887B3DE77BA88070BBCF9F1 /* Routing */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = Routing;
+		};
+		40E0518FE2985F781332A3FC /* Transport */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Transport;
 		};
 		60007AAAC4BC6BE0CD268DE6 /* Core */ = {
 			isa = XCSwiftPackageProductDependency;

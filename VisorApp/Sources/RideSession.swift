@@ -4,6 +4,7 @@ import Guidance
 import Observation
 import Routing
 import Simulation
+import Transport
 
 /// Drives the guidance engine and holds what the screen shows.
 ///
@@ -38,6 +39,10 @@ final class RideSession {
     var source: Source = .replay {
         didSet { restart() }
     }
+
+    /// The radio. Observed through its own properties, so the screen can show
+    /// what the link is doing without this having to mirror any of it.
+    @ObservationIgnored let link = HUDLink()
 
     @ObservationIgnored private var engine: GuidanceEngine
     @ObservationIgnored private var locations: any LocationSource
@@ -140,6 +145,11 @@ final class RideSession {
 
         let now = locations.now
         state = engine.state(at: now)
+
+        // The beat the whole thing is built around: one packet a second,
+        // whether or not a fix arrived, because a display that hears nothing
+        // cannot tell a quiet phone from a dead one.
+        link.send(HUDPacket(state))
 
         if engine.shouldRequestReroute(at: now) {
             requestReroute(at: now)

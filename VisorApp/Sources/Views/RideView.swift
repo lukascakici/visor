@@ -8,7 +8,8 @@ import SwiftUI
 /// The one screen there is: the route on a map, the next maneuver over it, and
 /// the controls that stand in for a rider until there is a device to ride with.
 struct RideView: View {
-    @State private var session = RideSession()
+    let session: RideSession
+
     @State private var camera: MapCameraPosition = .automatic
     @State private var isSearching = false
 
@@ -20,6 +21,7 @@ struct RideView: View {
             VStack(spacing: 8) {
                 ManeuverBanner(state: session.state)
                 destinationBar
+                linkBar
             }
             .padding(.horizontal, 12)
         }
@@ -81,6 +83,37 @@ struct RideView: View {
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
         .contentShape(Rectangle())
         .onTapGesture { isSearching = true }
+    }
+
+    /// What the radio is doing, and proof that packets are actually leaving.
+    ///
+    /// The count is here because a link can look connected while nothing at all
+    /// is being written, and on a ride that difference is the whole product.
+    private var linkBar: some View {
+        HStack(spacing: 8) {
+            Circle()
+                .fill(session.link.state == .connected ? .green : .orange)
+                .frame(width: 7, height: 7)
+
+            Text(session.link.state.label)
+                .font(.system(size: 12, weight: .medium))
+
+            Spacer()
+
+            if session.link.packetsSent > 0 {
+                Text("\(session.link.packetsSent) sent · \(session.link.lastPacketSize) B")
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundStyle(.secondary)
+            }
+            if session.link.packetsDropped > 0 {
+                Text("\(session.link.packetsDropped) dropped")
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundStyle(.orange)
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .background(.ultraThinMaterial, in: Capsule())
     }
 
     // MARK: - Map
@@ -164,6 +197,6 @@ struct RideView: View {
 }
 
 #Preview {
-    RideView()
+    RideView(session: RideSession())
         .preferredColorScheme(.dark)
 }

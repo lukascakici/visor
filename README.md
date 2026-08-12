@@ -35,9 +35,27 @@ project opens without installing anything. After editing `project.yml`, or the
 
     cd VisorApp && xcodegen generate
 
-Bluetooth is not part of this yet, and could not be: the iOS Simulator has no
-Bluetooth stack at all. The HUD link is tried on a real iPhone against the
-macOS peripheral simulator.
+In the simulator the link reports "No Bluetooth on this device", which is the
+truth: the iOS Simulator has no Bluetooth stack at all. Everything else works
+there; the link can only be tried on a real iPhone.
+
+## Trying the whole thing end to end
+
+Needs a real iPhone, because of the above.
+
+1. On the Mac, run `VisorSim`. Wait for "Advertising, waiting for the phone".
+2. In `VisorApp`, select the Visor target, and under Signing & Capabilities
+   choose your team and change the bundle identifier to one nobody else has
+   taken.
+3. Plug the iPhone in, pick it in the device menu, and run.
+4. The pill under the search bar should go to "Connected", with a packet count
+   climbing once a second. The Mac window shows the same numbers, decoded from
+   the bytes it received.
+
+Guidance keeps running with the screen off while Live GPS is the source: the app
+holds location updates in the background, which is what keeps the 1 Hz writes
+going. A replayed ride has no location updates to hold it awake, so it stops
+when the app does.
 
 ## Running the HUD simulator
 
