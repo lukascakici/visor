@@ -125,23 +125,10 @@ final class PolylineProjectionTests: XCTestCase {
 
         for meters in stride(from: 0.0, through: 280.0, by: 20.0) {
             // Walk the route by projecting points that sit on it.
-            let along = try XCTUnwrap(Geo.project(pointAlong(route, meters: meters), onto: route))
+            let onRoute = try XCTUnwrap(Geo.coordinate(on: route, at: meters))
+            let along = try XCTUnwrap(Geo.project(onRoute, onto: route))
             XCTAssertGreaterThan(along.distanceAlongPolyline, previous, "at \(meters) m")
             previous = along.distanceAlongPolyline
         }
-    }
-
-    /// Walks `meters` along the polyline and returns the coordinate there.
-    private func pointAlong(_ polyline: [Coordinate], meters: Double) -> Coordinate {
-        var remaining = meters
-        for index in 0..<(polyline.count - 1) {
-            let length = Geo.distance(from: polyline[index], to: polyline[index + 1])
-            if remaining <= length {
-                let bearing = Geo.initialBearing(from: polyline[index], to: polyline[index + 1])
-                return Geo.destination(from: polyline[index], bearing: bearing, distance: remaining)
-            }
-            remaining -= length
-        }
-        return polyline[polyline.count - 1]
     }
 }
