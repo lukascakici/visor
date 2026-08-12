@@ -1,0 +1,51 @@
+# Generated with XcodeGen; see ../VisorApp/project.yml for the same setup on the
+# phone side. Run `xcodegen generate` here after changing anything.
+name: VisorSim
+options:
+  bundleIdPrefix: com.visor
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+
+packages:
+  Visor:
+    path: ../Visor
+
+targets:
+  VisorSim:
+    type: application
+    platform: macOS
+    scheme: {}
+    sources:
+      - path: Sources
+    dependencies:
+      - package: Visor
+        product: Core
+      - package: Visor
+        product: Guidance
+      - package: Visor
+        product: Simulation
+      - package: Visor
+        product: Transport
+    info:
+      path: Info.plist
+      properties:
+        CFBundleDisplayName: Visor HUD Simulator
+        LSMinimumSystemVersion: "14.0"
+        # CoreBluetooth refuses to start without this, on macOS as much as on
+        # iOS, even to act as a peripheral.
+        NSBluetoothAlwaysUsageDescription:
+          The simulator advertises itself as a Visor heads-up display so the phone
+          has something to connect to.
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.visor.sim
+        MARKETING_VERSION: "0.1"
+        CURRENT_PROJECT_VERSION: 1
+        SWIFT_VERSION: "5.0"
+        GENERATE_INFOPLIST_FILE: NO
+        # Signed to run locally: this is a test rig for one machine, not
+        # something that gets distributed.
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual
+        ENABLE_HARDENED_RUNTIME: NO

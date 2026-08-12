@@ -1,0 +1,369 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		13B48EE219ED2305EB74A42D /* Simulation in Frameworks */ = {isa = PBXBuildFile; productRef = CA6DBEC5FF655658202AF13A /* Simulation */; };
+		313D293FEF4E7D91E5C4515F /* Transport in Frameworks */ = {isa = PBXBuildFile; productRef = 7446DEEF033BCB0F0FC75D9B /* Transport */; };
+		3F27B8F6E3AC126C8E86D0F2 /* Guidance in Frameworks */ = {isa = PBXBuildFile; productRef = 5D13A426AB446413BDE090A7 /* Guidance */; };
+		54D6906AE9AA1751F8DD1C87 /* DemoFeed.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946C703D2B7F7CFDB948F57A /* DemoFeed.swift */; };
+		5C775F6D3B62994A9B9D22DC /* PeripheralServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DC9BFC2CA4783EE6947E860 /* PeripheralServer.swift */; };
+		6B16DA00C0BE6FC119B61FCC /* HUDView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7B85E66DF5D7D88F78AE669 /* HUDView.swift */; };
+		C9232C68912DE7D3F0BF32DC /* VisorSimApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A90C7BDC71A264D5DACAD9 /* VisorSimApp.swift */; };
+		E869826C0BF12E1D9D90E6F3 /* Core in Frameworks */ = {isa = PBXBuildFile; productRef = F63860A0D8675C4CF558354C /* Core */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		31C22B42A5A4DA6784E61405 /* Visor */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Visor; path = ../Visor; sourceTree = SOURCE_ROOT; };
+		6DC9BFC2CA4783EE6947E860 /* PeripheralServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeripheralServer.swift; sourceTree = "<group>"; };
+		946C703D2B7F7CFDB948F57A /* DemoFeed.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoFeed.swift; sourceTree = "<group>"; };
+		BCB4B6DD4277D87B07D327CB /* VisorSim.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VisorSim.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D1A90C7BDC71A264D5DACAD9 /* VisorSimApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisorSimApp.swift; sourceTree = "<group>"; };
+		E7B85E66DF5D7D88F78AE669 /* HUDView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HUDView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		99B5B64A47694455AEC1394A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E869826C0BF12E1D9D90E6F3 /* Core in Frameworks */,
+				3F27B8F6E3AC126C8E86D0F2 /* Guidance in Frameworks */,
+				13B48EE219ED2305EB74A42D /* Simulation in Frameworks */,
+				313D293FEF4E7D91E5C4515F /* Transport in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		8353B3ACA786E8EE3E5DB888 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				31C22B42A5A4DA6784E61405 /* Visor */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		ADEC1CB3DAEFF2681CF8D148 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				BCB4B6DD4277D87B07D327CB /* VisorSim.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CBBBC49E2BDB2051FA9AB33A = {
+			isa = PBXGroup;
+			children = (
+				8353B3ACA786E8EE3E5DB888 /* Packages */,
+				E3DFBC216E1D3AF34D8AC558 /* Sources */,
+				ADEC1CB3DAEFF2681CF8D148 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		E3DFBC216E1D3AF34D8AC558 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				946C703D2B7F7CFDB948F57A /* DemoFeed.swift */,
+				E7B85E66DF5D7D88F78AE669 /* HUDView.swift */,
+				6DC9BFC2CA4783EE6947E860 /* PeripheralServer.swift */,
+				D1A90C7BDC71A264D5DACAD9 /* VisorSimApp.swift */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		C641D7C4F9F4EB80E87DDACA /* VisorSim */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A7ECE12235F6B2AD63AE232A /* Build configuration list for PBXNativeTarget "VisorSim" */;
+			buildPhases = (
+				F5A6BDBFD67EFAC235EB5CF3 /* Sources */,
+				99B5B64A47694455AEC1394A /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = VisorSim;
+			packageProductDependencies = (
+				F63860A0D8675C4CF558354C /* Core */,
+				5D13A426AB446413BDE090A7 /* Guidance */,
+				CA6DBEC5FF655658202AF13A /* Simulation */,
+				7446DEEF033BCB0F0FC75D9B /* Transport */,
+			);
+			productName = VisorSim;
+			productReference = BCB4B6DD4277D87B07D327CB /* VisorSim.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		69C04D238D5710448B990D93 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					C641D7C4F9F4EB80E87DDACA = {
+						ProvisioningStyle = Manual;
+					};
+				};
+			};
+			buildConfigurationList = 7AD3F73C05E3941AB6423720 /* Build configuration list for PBXProject "VisorSim" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = CBBBC49E2BDB2051FA9AB33A;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				A9B10D63E5372ED2258A0CF6 /* XCLocalSwiftPackageReference "../Visor" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = ADEC1CB3DAEFF2681CF8D148 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				C641D7C4F9F4EB80E87DDACA /* VisorSim */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		F5A6BDBFD67EFAC235EB5CF3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				54D6906AE9AA1751F8DD1C87 /* DemoFeed.swift in Sources */,
+				6B16DA00C0BE6FC119B61FCC /* HUDView.swift in Sources */,
+				5C775F6D3B62994A9B9D22DC /* PeripheralServer.swift in Sources */,
+				C9232C68912DE7D3F0BF32DC /* VisorSimApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		50FB07F4F9C29D7A904D8B73 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.visor.sim;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		62D6A504224A4AA47F6FD7B0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		725B1EA8D6F1CF69BCE2BB63 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.visor.sim;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		B6CA0B4F1D2F64763F6BF7A8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		7AD3F73C05E3941AB6423720 /* Build configuration list for PBXProject "VisorSim" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B6CA0B4F1D2F64763F6BF7A8 /* Debug */,
+				62D6A504224A4AA47F6FD7B0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		A7ECE12235F6B2AD63AE232A /* Build configuration list for PBXNativeTarget "VisorSim" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				725B1EA8D6F1CF69BCE2BB63 /* Debug */,
+				50FB07F4F9C29D7A904D8B73 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		A9B10D63E5372ED2258A0CF6 /* XCLocalSwiftPackageReference "../Visor" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../Visor;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		5D13A426AB446413BDE090A7 /* Guidance */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Guidance;
+		};
+		7446DEEF033BCB0F0FC75D9B /* Transport */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Transport;
+		};
+		CA6DBEC5FF655658202AF13A /* Simulation */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Simulation;
+		};
+		F63860A0D8675C4CF558354C /* Core */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Core;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 69C04D238D5710448B990D93 /* Project object */;
+}

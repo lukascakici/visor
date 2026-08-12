@@ -39,6 +39,18 @@ Bluetooth is not part of this yet, and could not be: the iOS Simulator has no
 Bluetooth stack at all. The HUD link is tried on a real iPhone against the
 macOS peripheral simulator.
 
+## Running the HUD simulator
+
+    cd VisorSim && open VisorSim.xcodeproj
+
+Run it on the Mac. It advertises itself as a Visor heads-up display over
+Bluetooth and shows whatever gets written to it, decoded from the bytes and
+nothing else. The **Demo feed** switch drives the display from a replayed ride
+with no Bluetooth in between, which is how a display fault is told apart from a
+link fault.
+
+Also generated with XcodeGen from `project.yml`.
+
 ## Seeing it work
 
 Ride a synthetic track through the guidance engine and watch what would be sent
