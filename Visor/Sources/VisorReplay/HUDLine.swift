@@ -29,6 +29,14 @@ enum HUDLine {
         return "  \(stamp)  \(pad(turn, 23))  \(street)  \(left)  \(eta)  \(speed)  \(flags(state))"
     }
 
+    /// The packet as it would go out: the ten header bytes, then whatever of
+    /// the street name fitted.
+    static func bytes(_ data: Data) -> String {
+        let header = data.prefix(10).map { String(format: "%02X", $0) }.joined(separator: " ")
+        let name = String(decoding: data.dropFirst(10), as: UTF8.self)
+        return "        \(header)  │ \(data.count) bytes │ \"\(name)\""
+    }
+
     /// The three flag bits the packet carries, spelled out.
     private static func flags(_ state: GuidanceState) -> String {
         var raised: [String] = []

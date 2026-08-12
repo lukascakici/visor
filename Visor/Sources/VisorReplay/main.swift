@@ -3,6 +3,7 @@ import Foundation
 import Geometry
 import Guidance
 import Simulation
+import Transport
 
 // Rides a synthetic track through the guidance engine and prints what would be
 // sent to the HUD, one line per second. Nothing here touches CoreLocation,
@@ -12,10 +13,12 @@ import Simulation
 //   swift run visor-replay detour       the rider misses a turn
 //   swift run visor-replay tunnel       the signal drops out
 //   swift run visor-replay ride --fast  no pause between seconds
+//   swift run visor-replay --bytes      show the packet that would be written
 
 let arguments = CommandLine.arguments.dropFirst()
 let scenario = arguments.compactMap(Scenario.init(rawValue:)).first ?? .ride
 let pause = arguments.contains("--fast") ? 0 : 0.12
+let showBytes = arguments.contains("--bytes")
 
 let route = DemoRoute.make()
 let ride = Ride(route: route, scenario: scenario)
@@ -44,6 +47,12 @@ for second in 0...ride.duration {
 
     let state = engine.state(at: now)
     print(HUDLine.render(state, atSecond: second))
+
+    if showBytes {
+        // Exactly what would be written to the HUD characteristic, at the
+        // payload size a link that has not negotiated a larger MTU offers.
+        print(HUDLine.bytes(HUDPacket(state).encoded(maximumSize: HUDPacket.guaranteedSize)))
+    }
 
     // What the app will do for real once MKDirections is wired up. Here it just
     // announces itself and stays in the rerouting state, which is enough to see

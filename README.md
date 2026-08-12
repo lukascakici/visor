@@ -49,8 +49,9 @@ to the HUD, one line per second:
     swift run visor-replay detour   # the rider misses a turn
     swift run visor-replay tunnel   # the signal drops out
 
-Add `--fast` to skip the pause between seconds. No device, no simulator and no
-map service is involved.
+Add `--fast` to skip the pause between seconds, and `--bytes` to print the
+packet that would be written to the HUD under each line. No device, no simulator
+and no map service is involved.
 
 ## Tests
 

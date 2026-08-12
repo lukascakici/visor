@@ -32,8 +32,10 @@ let package = Package(
         // only layer that touches MapKit.
         .target(name: "Routing", dependencies: ["Core", "Geometry"]),
 
-        // Binary packet serialization. Pure; no CoreBluetooth dependency.
-        .target(name: "Transport", dependencies: ["Core"]),
+        // Binary packet serialization: guidance in, bytes out. Depends on
+        // Guidance because that is what it serializes, and on nothing from
+        // CoreBluetooth, so the wire format can be tested without a radio.
+        .target(name: "Transport", dependencies: ["Core", "Guidance"]),
 
         // A route and a rider to try the guidance engine against while there is
         // no device, no map service and nobody actually riding. Used by both
@@ -42,7 +44,10 @@ let package = Package(
 
         // Rides a synthetic track through the guidance engine and prints what
         // would go to the HUD.
-        .executableTarget(name: "VisorReplay", dependencies: ["Core", "Geometry", "Guidance", "Simulation"]),
+        .executableTarget(
+            name: "VisorReplay",
+            dependencies: ["Core", "Geometry", "Guidance", "Simulation", "Transport"]
+        ),
 
         .testTarget(name: "GeometryTests", dependencies: ["Geometry"]),
         .testTarget(name: "GuidanceTests", dependencies: ["Guidance"]),
