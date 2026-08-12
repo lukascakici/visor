@@ -13,6 +13,7 @@ let package = Package(
         .library(name: "Guidance", targets: ["Guidance"]),
         .library(name: "Routing", targets: ["Routing"]),
         .library(name: "Transport", targets: ["Transport"]),
+        .executable(name: "visor-replay", targets: ["VisorReplay"]),
     ],
     targets: [
         // Shared pure models: Coordinate, Route, ManeuverType and friends.
@@ -32,6 +33,10 @@ let package = Package(
 
         // Binary packet serialization. Pure; no CoreBluetooth dependency.
         .target(name: "Transport", dependencies: ["Core"]),
+
+        // Rides a synthetic track through the guidance engine and prints what
+        // would go to the HUD. No device, no simulator, no map service.
+        .executableTarget(name: "VisorReplay", dependencies: ["Core", "Geometry", "Guidance"]),
 
         .testTarget(name: "GeometryTests", dependencies: ["Geometry"]),
         .testTarget(name: "GuidanceTests", dependencies: ["Guidance"]),

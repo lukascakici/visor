@@ -19,6 +19,19 @@ peripheral simulator for macOS.
     VisorApp/    iOS app (SwiftUI, CoreLocation, CoreBluetooth central)
     VisorSim/    macOS BLE peripheral simulator
 
+## Seeing it work
+
+Ride a synthetic track through the guidance engine and watch what would be sent
+to the HUD, one line per second:
+
+    cd Visor
+    swift run visor-replay          # a clean ride
+    swift run visor-replay detour   # the rider misses a turn
+    swift run visor-replay tunnel   # the signal drops out
+
+Add `--fast` to skip the pause between seconds. No device, no simulator and no
+map service is involved.
+
 ## Tests
 
     cd Visor && swift test
