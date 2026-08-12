@@ -68,11 +68,46 @@ public struct RouteIndex: Sendable {
     ///
     /// Returns `nil` for a route with no geometry to snap to.
     public func progress(at coordinate: Coordinate) -> RouteProgress? {
-        guard !route.steps.isEmpty,
-              let projection = Geo.project(coordinate, onto: route.polyline)
-        else { return nil }
+        guard let projection = Geo.project(coordinate, onto: route.polyline) else { return nil }
+        return progress(
+            travelled: projection.distanceAlongPolyline,
+            snapped: projection.point,
+            distanceFromRoute: projection.distance
+        )
+    }
 
-        let travelled = projection.distanceAlongPolyline
+    /// Locates a position, considering only the stretch of route from `back`
+    /// meters behind `travelled` to `ahead` meters in front of it.
+    ///
+    /// A route that doubles back on itself passes close to where it has already
+    /// been, and the globally closest point can then be on the wrong leg: the
+    /// rider appears to teleport back to a stretch ridden ten minutes ago. A
+    /// position only has to be judged against the road the rider could
+    /// plausibly have reached since the last fix, which is what this does.
+    public func progress(
+        at coordinate: Coordinate,
+        around travelled: Double,
+        back: Double,
+        ahead: Double
+    ) -> RouteProgress? {
+        let from = max(0, travelled - back)
+        let window = Geo.slice(route.polyline, from: from, to: travelled + ahead)
+
+        guard let projection = Geo.project(coordinate, onto: window) else { return nil }
+        return progress(
+            travelled: from + projection.distanceAlongPolyline,
+            snapped: projection.point,
+            distanceFromRoute: projection.distance
+        )
+    }
+
+    private func progress(
+        travelled: Double,
+        snapped: Coordinate,
+        distanceFromRoute: Double
+    ) -> RouteProgress? {
+        guard !route.steps.isEmpty else { return nil }
+
         let stepIndex = stepOffsets.lastIndex { $0 <= travelled } ?? 0
         let isFinalStep = stepIndex == route.steps.count - 1
 
@@ -87,8 +122,8 @@ public struct RouteIndex: Sendable {
             + timeAfterStep[stepIndex]
 
         return RouteProgress(
-            snapped: projection.point,
-            distanceFromRoute: projection.distance,
+            snapped: snapped,
+            distanceFromRoute: distanceFromRoute,
             distanceTravelled: travelled,
             distanceRemaining: max(0, length - travelled),
             stepIndex: stepIndex,
