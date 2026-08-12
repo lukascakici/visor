@@ -28,9 +28,9 @@ let package = Package(
         // independent of CoreLocation and CoreBluetooth.
         .target(name: "Guidance", dependencies: ["Core", "Geometry"]),
 
-        // MKDirections wrapper: converts MKRoute into Core.Route. This is the
-        // only layer that touches MapKit.
-        .target(name: "Routing", dependencies: ["Core", "Geometry"]),
+        // MKDirections wrapper: converts MKRoute into Core.Route, maneuvers and
+        // all. The only layer that touches MapKit.
+        .target(name: "Routing", dependencies: ["Core", "Geometry", "Guidance"]),
 
         // Binary packet serialization: guidance in, bytes out. Depends on
         // Guidance because that is what it serializes, and on nothing from
@@ -46,7 +46,7 @@ let package = Package(
         // would go to the HUD.
         .executableTarget(
             name: "VisorReplay",
-            dependencies: ["Core", "Geometry", "Guidance", "Simulation", "Transport"]
+            dependencies: ["Core", "Geometry", "Guidance", "Routing", "Simulation", "Transport"]
         ),
 
         .testTarget(name: "GeometryTests", dependencies: ["Geometry"]),

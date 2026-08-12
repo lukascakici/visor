@@ -7,18 +7,19 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0877F6986B8BC4F1B5E5AC65 /* CoordinateBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD97FCEC25C0CF0790C1FB17 /* CoordinateBridge.swift */; };
 		097660F6CDE11D4A18A02FE7 /* ManeuverBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 676FA7E787B6961D476149AD /* ManeuverBanner.swift */; };
 		3D28A8DA61A50213A9B97686 /* ManeuverGlyph.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB93F67E36B527434DD5AE60 /* ManeuverGlyph.swift */; };
 		53D76DB41AC75917F9B9B8FE /* RideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAB6CB3F22D201DC4CDDCAFA /* RideView.swift */; };
 		6394A179A493CBF8C4076A79 /* LocationSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB048EBDCB7887FDEFD89244 /* LocationSource.swift */; };
 		675387AC208A04C5B9445FB7 /* VisorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CA881968F005F08703ABC96 /* VisorApp.swift */; };
+		7AFED445BC34407D15AD186A /* Simulation in Frameworks */ = {isa = PBXBuildFile; productRef = A2127D4DF9B24CCAA1E83661 /* Simulation */; };
 		B53487AB725C2EB4F9848798 /* Geometry in Frameworks */ = {isa = PBXBuildFile; productRef = 635FB2F076BF92B66C9425B4 /* Geometry */; };
 		B6A469C2843E9A1D7ABF67A8 /* Guidance in Frameworks */ = {isa = PBXBuildFile; productRef = 74CD2E9D8906BAD1ECD726A6 /* Guidance */; };
 		BB8A3D44BB65DC55C36F71DD /* Core in Frameworks */ = {isa = PBXBuildFile; productRef = 60007AAAC4BC6BE0CD268DE6 /* Core */; };
 		D778B4682E6FFF3B3939C3B9 /* RideSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 586FA4E59EFDB36B419A1CB6 /* RideSession.swift */; };
 		E36083469DD70D06D17ABDC3 /* StatusBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4BB01E78B662A72A914B1E0 /* StatusBar.swift */; };
-		EAA84C4A522BE5AD19D0D80A /* Simulation in Frameworks */ = {isa = PBXBuildFile; productRef = A2127D4DF9B24CCAA1E83661 /* Simulation */; };
+		EAA84C4A522BE5AD19D0D80A /* Routing in Frameworks */ = {isa = PBXBuildFile; productRef = 0887B3DE77BA88070BBCF9F1 /* Routing */; };
+		EF582892E77F94C87838C638 /* DestinationSearch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BC0F2FBF148BF99109127EF /* DestinationSearch.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,7 +27,7 @@
 		586FA4E59EFDB36B419A1CB6 /* RideSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideSession.swift; sourceTree = "<group>"; };
 		615AA50D3C3F0E67E5645237 /* Visor */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Visor; path = ../Visor; sourceTree = SOURCE_ROOT; };
 		676FA7E787B6961D476149AD /* ManeuverBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManeuverBanner.swift; sourceTree = "<group>"; };
-		BD97FCEC25C0CF0790C1FB17 /* CoordinateBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoordinateBridge.swift; sourceTree = "<group>"; };
+		6BC0F2FBF148BF99109127EF /* DestinationSearch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DestinationSearch.swift; sourceTree = "<group>"; };
 		C4BB01E78B662A72A914B1E0 /* StatusBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBar.swift; sourceTree = "<group>"; };
 		CB048EBDCB7887FDEFD89244 /* LocationSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationSource.swift; sourceTree = "<group>"; };
 		DC1A5161253B3749862FF31E /* Visor.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Visor.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -42,21 +43,14 @@
 				BB8A3D44BB65DC55C36F71DD /* Core in Frameworks */,
 				B53487AB725C2EB4F9848798 /* Geometry in Frameworks */,
 				B6A469C2843E9A1D7ABF67A8 /* Guidance in Frameworks */,
-				EAA84C4A522BE5AD19D0D80A /* Simulation in Frameworks */,
+				EAA84C4A522BE5AD19D0D80A /* Routing in Frameworks */,
+				7AFED445BC34407D15AD186A /* Simulation in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		60C4767CEA088B5537AEA514 /* Support */ = {
-			isa = PBXGroup;
-			children = (
-				BD97FCEC25C0CF0790C1FB17 /* CoordinateBridge.swift */,
-			);
-			path = Support;
-			sourceTree = "<group>";
-		};
 		72BB29354F905D7899C52490 /* Packages */ = {
 			isa = PBXGroup;
 			children = (
@@ -71,7 +65,6 @@
 				586FA4E59EFDB36B419A1CB6 /* RideSession.swift */,
 				2CA881968F005F08703ABC96 /* VisorApp.swift */,
 				D644F97F8446E42D592BAA22 /* Location */,
-				60C4767CEA088B5537AEA514 /* Support */,
 				D3039F90A0A4E1E623548A2D /* Views */,
 			);
 			path = Sources;
@@ -97,6 +90,7 @@
 		D3039F90A0A4E1E623548A2D /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				6BC0F2FBF148BF99109127EF /* DestinationSearch.swift */,
 				676FA7E787B6961D476149AD /* ManeuverBanner.swift */,
 				EB93F67E36B527434DD5AE60 /* ManeuverGlyph.swift */,
 				EAB6CB3F22D201DC4CDDCAFA /* RideView.swift */,
@@ -132,6 +126,7 @@
 				60007AAAC4BC6BE0CD268DE6 /* Core */,
 				635FB2F076BF92B66C9425B4 /* Geometry */,
 				74CD2E9D8906BAD1ECD726A6 /* Guidance */,
+				0887B3DE77BA88070BBCF9F1 /* Routing */,
 				A2127D4DF9B24CCAA1E83661 /* Simulation */,
 			);
 			productName = Visor;
@@ -179,7 +174,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0877F6986B8BC4F1B5E5AC65 /* CoordinateBridge.swift in Sources */,
+				EF582892E77F94C87838C638 /* DestinationSearch.swift in Sources */,
 				6394A179A493CBF8C4076A79 /* LocationSource.swift in Sources */,
 				097660F6CDE11D4A18A02FE7 /* ManeuverBanner.swift in Sources */,
 				3D28A8DA61A50213A9B97686 /* ManeuverGlyph.swift in Sources */,
@@ -387,6 +382,10 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		0887B3DE77BA88070BBCF9F1 /* Routing */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Routing;
+		};
 		60007AAAC4BC6BE0CD268DE6 /* Core */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = Core;

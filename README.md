@@ -62,8 +62,19 @@ to the HUD, one line per second:
     swift run visor-replay tunnel   # the signal drops out
 
 Add `--fast` to skip the pause between seconds, and `--bytes` to print the
-packet that would be written to the HUD under each line. No device, no simulator
-and no map service is involved.
+packet that would be written to the HUD under each line.
+
+To ride a real route rather than the hand-built one, name a destination. This is
+the only way to find out what a map service's geometry does to the maneuver
+classifier before a rider does:
+
+    swift run visor-replay --to Bostanci
+    swift run visor-replay --to Bostanci --steps
+
+`--steps` prints one row per junction: the bearings either side of it, the angle
+between them, the maneuver worked out from that angle, and the sentence the map
+service attached to the same junction. If those two ever stop agreeing,
+something has come apart.
 
 ## Tests
 

@@ -129,9 +129,10 @@ public struct RouteIndex: Sendable {
             stepIndex: stepIndex,
             maneuver: isFinalStep ? .arrive : route.steps[stepIndex + 1].maneuver,
             distanceToManeuver: toManeuver,
-            streetName: isFinalStep
-                ? route.steps[stepIndex].streetName
-                : route.steps[stepIndex + 1].streetName,
+            // The maneuver ahead ends the current step, so its label is the
+            // current step's, while its shape is the next step's. Two fields on
+            // two different steps, describing one junction.
+            streetName: route.steps[stepIndex].streetName,
             timeRemaining: timeRemaining
         )
     }

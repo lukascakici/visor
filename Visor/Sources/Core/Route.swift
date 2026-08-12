@@ -12,8 +12,15 @@ public struct RouteStep: Hashable, Sendable {
     public var distance: Double
     /// How long the step is expected to take, in seconds.
     public var expectedTravelTime: TimeInterval
-    /// Name of the road this step runs along, in whatever language the map data
-    /// came in. Display only: nothing in Guidance ever reads it.
+    /// What to call the maneuver that *ends* this step: the road it leads onto,
+    /// or on the last step, the arrival.
+    ///
+    /// It belongs to the end rather than the start because that is the thing a
+    /// rider is about to do, and because it is where map services put it. The
+    /// text is display only, in whatever language the map data came in, and
+    /// nothing in Guidance ever reads it. The arrow beside it is worked out
+    /// from the geometry, so the prose can say anything at all and the
+    /// instruction stays right.
     public var streetName: String?
     /// The maneuver entering this step. Filled in by the maneuver classifier
     /// from the geometry, never parsed out of an instruction string.

@@ -91,7 +91,11 @@ public enum ManeuverClassifier {
     }
 
     /// Direction of travel over the last `window` meters of a polyline.
-    static func exitBearing(of polyline: [Coordinate], window: Double) -> Double? {
+    ///
+    /// Public because it is the number to look at when a classification is
+    /// disputed: the maneuver is an opinion derived from these two bearings,
+    /// and the bearings are the evidence.
+    public static func exitBearing(of polyline: [Coordinate], window: Double) -> Double? {
         guard polyline.count > 1, let end = polyline.last else { return nil }
         let start = Geo.coordinate(on: polyline, at: max(0, Geo.length(of: polyline) - window))
         guard let start, Geo.distance(from: start, to: end) > 0 else { return nil }
@@ -99,7 +103,7 @@ public enum ManeuverClassifier {
     }
 
     /// Direction of travel over the first `window` meters of a polyline.
-    static func entryBearing(of polyline: [Coordinate], window: Double) -> Double? {
+    public static func entryBearing(of polyline: [Coordinate], window: Double) -> Double? {
         guard polyline.count > 1, let start = polyline.first else { return nil }
         let end = Geo.coordinate(on: polyline, at: min(window, Geo.length(of: polyline)))
         guard let end, Geo.distance(from: start, to: end) > 0 else { return nil }

@@ -29,7 +29,7 @@ public enum DemoRoute {
         var here = origin
         var steps: [RouteStep] = []
 
-        for leg in legs {
+        for (index, leg) in legs.enumerated() {
             // Two vertices per leg is enough to carry a direction; real route
             // geometry is denser, and the engine does not care either way.
             let end = Geo.destination(from: here, bearing: leg.bearing, distance: leg.meters)
@@ -38,7 +38,10 @@ public enum DemoRoute {
                     polyline: [here, end],
                     distance: leg.meters,
                     expectedTravelTime: leg.meters / quotedSpeed,
-                    streetName: leg.street
+                    // A step's label describes the maneuver that ends it, so it
+                    // names the road being turned onto rather than the one
+                    // being ridden. The last step ends at the destination.
+                    streetName: index + 1 < legs.count ? legs[index + 1].street : "Destination"
                 )
             )
             here = end

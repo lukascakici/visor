@@ -30,6 +30,8 @@ targets:
       - package: Visor
         product: Guidance
       - package: Visor
+        product: Routing
+      - package: Visor
         product: Simulation
     info:
       path: Info.plist

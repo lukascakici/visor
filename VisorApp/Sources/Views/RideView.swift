@@ -1,6 +1,7 @@
 import Core
 import Guidance
 import MapKit
+import Routing
 import Simulation
 import SwiftUI
 
@@ -9,14 +10,18 @@ import SwiftUI
 struct RideView: View {
     @State private var session = RideSession()
     @State private var camera: MapCameraPosition = .automatic
+    @State private var isSearching = false
 
     var body: some View {
         ZStack(alignment: .top) {
             map
                 .ignoresSafeArea()
 
-            ManeuverBanner(state: session.state)
-                .padding(.horizontal, 12)
+            VStack(spacing: 8) {
+                ManeuverBanner(state: session.state)
+                destinationBar
+            }
+            .padding(.horizontal, 12)
         }
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 12) {
@@ -25,6 +30,11 @@ struct RideView: View {
             }
             .padding(.horizontal, 12)
             .padding(.bottom, 8)
+        }
+        .sheet(isPresented: $isSearching) {
+            DestinationSearch(origin: session.origin) { place in
+                Task { await session.setDestination(place) }
+            }
         }
         .onAppear {
             camera = .region(region(around: session.route.polyline.first))
@@ -36,6 +46,41 @@ struct RideView: View {
                 camera = .region(region(around: snapped))
             }
         }
+    }
+
+    /// Where the ride is heading, and the way to change it.
+    private var destinationBar: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 13, weight: .semibold))
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(session.destination?.name ?? "Demo route")
+                    .font(.system(size: 14, weight: .medium))
+                    .lineLimit(1)
+                if let problem = session.routingProblem {
+                    Text(problem)
+                        .font(.system(size: 11))
+                        .foregroundStyle(.orange)
+                        .lineLimit(1)
+                }
+            }
+
+            Spacer()
+
+            if session.isPlanning {
+                ProgressView().controlSize(.small)
+            } else if session.destination != nil {
+                Button("Demo") { session.useDemoRoute() }
+                    .font(.system(size: 12, weight: .semibold))
+                    .buttonStyle(.bordered)
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
+        .contentShape(Rectangle())
+        .onTapGesture { isSearching = true }
     }
 
     // MARK: - Map

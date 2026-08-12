@@ -14,8 +14,10 @@ private func route() -> Route {
     let end = Geo.destination(from: corner, bearing: 90, distance: 300)
 
     return ManeuverClassifier.annotated(Route(steps: [
-        RouteStep(polyline: [start, corner], distance: 300, expectedTravelTime: 40, streetName: "First"),
-        RouteStep(polyline: [corner, end], distance: 300, expectedTravelTime: 40, streetName: "Second"),
+        // A step is labelled with the road it leads onto, not the one it runs
+        // along: the label belongs to the maneuver that ends the step.
+        RouteStep(polyline: [start, corner], distance: 300, expectedTravelTime: 40, streetName: "Second"),
+        RouteStep(polyline: [corner, end], distance: 300, expectedTravelTime: 40, streetName: "Destination"),
     ]))
 }
 

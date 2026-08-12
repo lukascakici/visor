@@ -7,6 +7,9 @@ private let start = Coordinate(latitude: 41.0082, longitude: 28.9784)
 
 /// Three 200 m legs, 30 seconds each: north, right onto an east road, left back
 /// onto a north road. Long enough that the maneuvers classify unambiguously.
+///
+/// Each step is labelled with the road it leads onto, which is the convention:
+/// a step's name belongs to the maneuver that ends it.
 private func threeLegRoute() -> Route {
     let first = Geo.destination(from: start, bearing: 0, distance: 200)
     let second = Geo.destination(from: first, bearing: 90, distance: 200)
@@ -14,9 +17,9 @@ private func threeLegRoute() -> Route {
 
     return ManeuverClassifier.annotated(
         Route(steps: [
-            RouteStep(polyline: [start, first], distance: 200, expectedTravelTime: 30, streetName: "First"),
-            RouteStep(polyline: [first, second], distance: 200, expectedTravelTime: 30, streetName: "Second"),
-            RouteStep(polyline: [second, third], distance: 200, expectedTravelTime: 30, streetName: "Third"),
+            RouteStep(polyline: [start, first], distance: 200, expectedTravelTime: 30, streetName: "Second"),
+            RouteStep(polyline: [first, second], distance: 200, expectedTravelTime: 30, streetName: "Third"),
+            RouteStep(polyline: [second, third], distance: 200, expectedTravelTime: 30, streetName: "Destination"),
         ])
     )
 }
@@ -81,6 +84,17 @@ final class RouteProgressTests: XCTestCase {
         XCTAssertEqual(progress.streetName, "Second")
     }
 
+    /// One junction, described by two steps: the shape of the turn comes from
+    /// the step being entered, the words for it from the step being left. Map
+    /// services put the words there, and the display has to read them from the
+    /// same place or every instruction lands one junction out.
+    func testTheLabelAndTheArrowDescribeTheSameJunction() throws {
+        let progress = try XCTUnwrap(index.progress(at: start))
+
+        XCTAssertEqual(progress.maneuver, index.route.steps[1].maneuver)
+        XCTAssertEqual(progress.streetName, index.route.steps[0].streetName)
+    }
+
     func testProgressPartwayThroughAStep() throws {
         let here = try XCTUnwrap(Geo.coordinate(on: index.route.polyline, at: 100))
         let progress = try XCTUnwrap(index.progress(at: here))
@@ -117,8 +131,8 @@ final class RouteProgressTests: XCTestCase {
         XCTAssertEqual(progress.stepIndex, 2)
         XCTAssertEqual(progress.maneuver, .arrive)
         XCTAssertEqual(progress.distanceToManeuver, 100, accuracy: 0.2)
-        // On the last step the name is the road being arrived on.
-        XCTAssertEqual(progress.streetName, "Third")
+        // The last step ends at the destination, so that is what it is called.
+        XCTAssertEqual(progress.streetName, "Destination")
     }
 
     func testPastTheDestinationNothingGoesNegative() throws {
