@@ -13,6 +13,7 @@ let package = Package(
         .library(name: "Guidance", targets: ["Guidance"]),
         .library(name: "Routing", targets: ["Routing"]),
         .library(name: "Transport", targets: ["Transport"]),
+        .library(name: "Simulation", targets: ["Simulation"]),
         .executable(name: "visor-replay", targets: ["VisorReplay"]),
     ],
     targets: [
@@ -34,9 +35,14 @@ let package = Package(
         // Binary packet serialization. Pure; no CoreBluetooth dependency.
         .target(name: "Transport", dependencies: ["Core"]),
 
+        // A route and a rider to try the guidance engine against while there is
+        // no device, no map service and nobody actually riding. Used by both
+        // the replay tool and the iOS app.
+        .target(name: "Simulation", dependencies: ["Core", "Geometry", "Guidance"]),
+
         // Rides a synthetic track through the guidance engine and prints what
-        // would go to the HUD. No device, no simulator, no map service.
-        .executableTarget(name: "VisorReplay", dependencies: ["Core", "Geometry", "Guidance"]),
+        // would go to the HUD.
+        .executableTarget(name: "VisorReplay", dependencies: ["Core", "Geometry", "Guidance", "Simulation"]),
 
         .testTarget(name: "GeometryTests", dependencies: ["Geometry"]),
         .testTarget(name: "GuidanceTests", dependencies: ["Guidance"]),

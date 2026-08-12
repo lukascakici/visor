@@ -3,7 +3,7 @@ import Foundation
 import Geometry
 
 /// What the rider does, beyond simply following the route.
-enum Scenario: String, CaseIterable {
+public enum Scenario: String, CaseIterable, Sendable {
     /// Rides the route from end to end.
     case ride
     /// Leaves the route partway along and keeps going.
@@ -11,7 +11,7 @@ enum Scenario: String, CaseIterable {
     /// Loses the signal for half a minute, then gets it back badly.
     case tunnel
 
-    var summary: String {
+    public var summary: String {
         switch self {
         case .ride: "follows the route to the end"
         case .detour: "leaves the route halfway and keeps riding"
@@ -25,21 +25,26 @@ enum Scenario: String, CaseIterable {
 /// Everything is derived from the tick number, so a run is reproducible: the
 /// same scenario always produces the same fixes, which is what makes the output
 /// worth comparing against a previous run.
-struct Ride {
-    let route: Route
-    let scenario: Scenario
+public struct Ride: Sendable {
+    public init(route: Route, scenario: Scenario) {
+        self.route = route
+        self.scenario = scenario
+    }
+
+    public let route: Route
+    public let scenario: Scenario
     /// Ground speed in meters per second, near enough to 50 km/h.
-    let speed = 14.0
+    public let speed = 14.0
 
     private var length: Double { Geo.length(of: route.polyline) }
     private var whereItGoesWrong: Double { length * 0.45 }
 
     /// How many seconds the ride lasts.
-    var duration: Int { Int(length / speed) + 15 }
+    public var duration: Int { Int(length / speed) + 15 }
 
     /// The fix for a given second, or `nil` when the receiver has nothing to
     /// report.
-    func fix(atSecond second: Int, now: Date) -> LocationFix? {
+    public func fix(atSecond second: Int, now: Date) -> LocationFix? {
         let travelled = Double(second) * speed
 
         switch scenario {

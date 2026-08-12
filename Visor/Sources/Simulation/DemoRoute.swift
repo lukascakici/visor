@@ -8,8 +8,8 @@ import Guidance
 /// The street names are real Turkish ones on purpose: they carry multi-byte
 /// characters, so anything that mishandles UTF-8 further down the line shows up
 /// here rather than on the device.
-enum DemoRoute {
-    static let origin = Coordinate(latitude: 40.9785, longitude: 29.0640)
+public enum DemoRoute {
+    public static let origin = Coordinate(latitude: 40.9785, longitude: 29.0640)
 
     /// (bearing to travel, meters, street being entered)
     /// Turned so the route exercises a different maneuver band at every
@@ -25,7 +25,7 @@ enum DemoRoute {
     /// Roughly 40 km/h, which is what the travel times are quoted at.
     private static let quotedSpeed = 11.0
 
-    static func make() -> Route {
+    public static func make() -> Route {
         var here = origin
         var steps: [RouteStep] = []
 

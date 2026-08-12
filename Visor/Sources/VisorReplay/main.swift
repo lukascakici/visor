@@ -2,6 +2,7 @@ import Core
 import Foundation
 import Geometry
 import Guidance
+import Simulation
 
 // Rides a synthetic track through the guidance engine and prints what would be
 // sent to the HUD, one line per second. Nothing here touches CoreLocation,

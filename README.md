@@ -19,6 +19,26 @@ peripheral simulator for macOS.
     VisorApp/    iOS app (SwiftUI, CoreLocation, CoreBluetooth central)
     VisorSim/    macOS BLE peripheral simulator
 
+## Running the app
+
+    cd VisorApp && open Visor.xcodeproj
+
+Pick an iPhone simulator and run. The app opens on the demo route with a
+replayed rider driving it, so it needs no receiver, no map service and no HUD.
+The scenario picker at the bottom switches between a clean ride, a missed turn
+and a lost signal.
+
+`Visor.xcodeproj` is generated from `project.yml` by
+[XcodeGen](https://github.com/yonaskolb/XcodeGen); both are committed, so the
+project opens without installing anything. After editing `project.yml`, or the
+`Info.plist` values inside it, regenerate:
+
+    cd VisorApp && xcodegen generate
+
+Bluetooth is not part of this yet, and could not be: the iOS Simulator has no
+Bluetooth stack at all. The HUD link is tried on a real iPhone against the
+macOS peripheral simulator.
+
 ## Seeing it work
 
 Ride a synthetic track through the guidance engine and watch what would be sent
