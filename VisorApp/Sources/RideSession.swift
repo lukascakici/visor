@@ -33,16 +33,24 @@ final class RideSession {
         didSet { restart() }
     }
 
-    private var engine: GuidanceEngine
-    private var locations: any LocationSource
-    private var timer: Timer?
+    // Machinery, not state to be watched: the views read `state`, and nothing
+    // good comes of redrawing them because a timer was replaced.
+    @ObservationIgnored private var engine: GuidanceEngine
+    @ObservationIgnored private var locations: any LocationSource
+    @ObservationIgnored private var timer: Timer?
 
     init() {
         let route = DemoRoute.make()
+        let engine = GuidanceEngine(route: route)
+        let locations = ReplaySource(route: route, scenario: .ride)
+
         self.route = route
-        self.engine = GuidanceEngine(route: route)
-        self.locations = ReplaySource(route: route, scenario: .ride)
-        self.state = engine.state(at: Date(timeIntervalSince1970: 1_700_000_000))
+        self.engine = engine
+        self.locations = locations
+        // Read from the local, not from `self`: under @Observable the stored
+        // properties are accessors, and none of them may be touched until every
+        // one of them has been assigned.
+        self.state = engine.state(at: locations.now)
     }
 
     // MARK: - Running
@@ -72,9 +80,9 @@ final class RideSession {
         stop()
 
         engine = GuidanceEngine(route: route)
-        locations = switch source {
-        case .replay: ReplaySource(route: route, scenario: scenario)
-        case .device: DeviceLocationSource()
+        switch source {
+        case .replay: locations = ReplaySource(route: route, scenario: scenario)
+        case .device: locations = DeviceLocationSource()
         }
         state = engine.state(at: locations.now)
 
