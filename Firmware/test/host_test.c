@@ -9,6 +9,7 @@
  *     cd Firmware/test && ./run.sh
  */
 #include <math.h>
+#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -454,7 +455,43 @@ static void test_numbers(void)
     check(lit[7] < lit[8], "and so is seven");
 }
 
-int main(void)
+/* How long a frame takes to draw, which is the question a bigger panel actually
+ * raises. Memory is not the constraint on a module with PSRAM; filling four
+ * times as many pixels thirty times a second is.
+ *
+ * Measured here on a desktop, so the absolute numbers mean nothing for the
+ * device. The ratio between the two sizes is what transfers, and that is what
+ * this prints.
+ */
+static void bench(void)
+{
+    struct {
+        int size;
+        uint16_t *pixels;
+    } panels[2] = { { WIDTH, pixels }, { DENSE, dense_pixels } };
+
+    visor_hud_state_t state;
+    visor_hud_reset(&state);
+    visor_hud_receive_guidance(&state, GUIDANCE, sizeof(GUIDANCE));
+    visor_hud_receive_path(&state, PATH, sizeof(PATH), 1000000);
+
+    printf("\nframe cost\n");
+    for (int index = 0; index < 2; index++) {
+        visor_canvas_t canvas = { panels[index].pixels, panels[index].size, panels[index].size };
+
+        clock_t started = clock();
+        int frames = 400;
+        for (int frame = 0; frame < frames; frame++) {
+            visor_hud_render(&canvas, &state, 1000000 + frame * 25000, VISOR_PANEL_ROUND);
+        }
+        double each = (double)(clock() - started) / CLOCKS_PER_SEC / frames;
+
+        printf("  %3dx%-3d  %6.3f ms a frame  (%.0f fps)\n",
+               panels[index].size, panels[index].size, each * 1000.0, 1.0 / each);
+    }
+}
+
+int main(int argc, char **argv)
 {
     test_guidance();
     test_street_truncation();
@@ -468,5 +505,10 @@ int main(void)
     test_denser_glass();
 
     printf("\n%d checks, %d failures\n", checks, failures);
+
+    if (argc > 1 && strcmp(argv[1], "bench") == 0) {
+        bench();
+    }
+
     return failures == 0 ? 0 : 1;
 }

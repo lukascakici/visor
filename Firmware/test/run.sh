@@ -16,4 +16,4 @@ cc -std=c99 -Wall -Wextra -Werror -O1 \
     host_test.c ../main/visor_packet.c ../main/visor_view.c ../main/visor_draw.c ../main/visor_hud.c \
     -lm -o host_test
 
-./host_test
+./host_test "$@"
