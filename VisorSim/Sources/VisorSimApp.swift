@@ -22,7 +22,7 @@ struct SimulatorView: View {
     var body: some View {
         VStack(spacing: 16) {
             header
-            HUDView(received: server.latest, path: server.latestPath)
+            HUDView(received: server.latest, path: server.path)
             log
         }
         .padding(16)

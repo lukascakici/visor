@@ -42,13 +42,28 @@ final class PeripheralServer: NSObject, CBPeripheralManagerDelegate {
 
     private(set) var status: Status = .starting
     private(set) var latest: Received?
+    /// The last two paths and when the newer one landed.
+    ///
+    /// Two rather than one because a display that only ever knows the newest
+    /// road can only ever jump to it. Everything needed to draw the road
+    /// *moving* is here: where it was, where it is, and how long the crossing
+    /// between them should take.
+    struct PathFeed: Equatable {
+        var latest: DecodedPath?
+        var previous: DecodedPath?
+        var arrivedAt: Date?
+        /// Measured rather than assumed, so the drawing keeps up with whatever
+        /// rate the phone actually manages.
+        var interval: TimeInterval = 1
+    }
+
     /// The shape of the road as last written, decoded from its own bytes.
     ///
     /// Held separately from `latest` because the two arrive on separate
     /// characteristics and either can go missing on its own. A display still
     /// showing a map while the instructions have stopped is a fault worth being
     /// able to see rather than one to paper over.
-    private(set) var latestPath: DecodedPath?
+    private(set) var path = PathFeed()
     /// Newest first, capped: this is a window on a live link, not a recording.
     private(set) var recent: [Received] = []
     private(set) var packetCount = 0
@@ -80,9 +95,20 @@ final class PeripheralServer: NSObject, CBPeripheralManagerDelegate {
 
     /// Takes a path packet the same way, from the air or from the demo feed.
     func acceptPath(_ data: Data) {
-        guard let path = DecodedPath(data) else { return }
+        guard let decoded = DecodedPath(data) else { return }
 
-        latestPath = path
+        let now = Date()
+        // A gap that is neither a duplicate nor a reconnection is what the
+        // packets are actually arriving at; anything else is not worth pacing
+        // the drawing to.
+        if let last = path.arrivedAt {
+            let gap = now.timeIntervalSince(last)
+            if gap > 0.05, gap < 3 { path.interval = gap }
+        }
+
+        path.previous = path.latest
+        path.latest = decoded
+        path.arrivedAt = now
         pathCount += 1
     }
 
