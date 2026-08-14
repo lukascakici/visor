@@ -160,13 +160,16 @@ float visor_view_crossing(int64_t now_us, int64_t arrived_us, int64_t interval_u
 visor_frame_t visor_frame_make(int width, int height)
 {
     visor_frame_t frame;
-    float depth = VISOR_VIEW_AHEAD_M + VISOR_VIEW_BEHIND_M;
 
-    frame.scale = (float)height / depth;
-    frame.centre_x = (float)width / 2.0f;
     /* The rider never moves. That is the whole point of a fixed frame: the road
-     * flows past a still rider, the way it does through a visor. */
-    frame.rider_y = (float)height * VISOR_VIEW_AHEAD_M / depth;
+     * flows past a still rider, the way it does through a visor.
+     *
+     * The scale follows from where they sit: the road ahead has to reach the
+     * top of the panel from there, and everything below is however much road
+     * behind that leaves room for. */
+    frame.rider_y = (float)height * VISOR_VIEW_RIDER;
+    frame.scale = frame.rider_y / VISOR_VIEW_AHEAD_M;
+    frame.centre_x = (float)width / 2.0f;
 
     return frame;
 }

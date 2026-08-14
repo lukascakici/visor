@@ -179,9 +179,10 @@ static void test_view(void)
 
     visor_frame_t frame = visor_frame_make(240, 240);
     check_near(visor_frame_x(&frame, 0.0f), 120.0f, 0.01f, "the rider is centred");
-    float depth = VISOR_VIEW_AHEAD_M + VISOR_VIEW_BEHIND_M;
-    check_near(visor_frame_y(&frame, 0.0f), 240.0f * VISOR_VIEW_AHEAD_M / depth, 0.01f,
+    check_near(visor_frame_y(&frame, 0.0f), 240.0f * VISOR_VIEW_RIDER, 0.01f,
                "and sits low, with the road ahead of them");
+    check_near(visor_frame_y(&frame, VISOR_VIEW_AHEAD_M), 0.0f, 0.01f,
+               "and the road ahead reaches the top of the panel");
     check(visor_frame_y(&frame, 100.0f) < visor_frame_y(&frame, 0.0f), "ahead is up the panel");
     check(visor_frame_x(&frame, 10.0f) > visor_frame_x(&frame, 0.0f), "right is to the right");
 }
@@ -450,31 +451,27 @@ static void test_the_rider_stays_visible_on_the_road(void)
     visor_hud_receive_path(&state, STRAIGHT, sizeof(STRAIGHT), 1000000);
     visor_hud_render(&canvas, &state, 1000000, VISOR_PANEL_ROUND);
 
-    /* A row through the rider, above its widest part, where the road is still
-     * wider than it is. */
-    int road_top = HEIGHT * 42 / 100;
-    int road_height = HEIGHT * 44 / 100;
-    float share = VISOR_VIEW_AHEAD_M / (VISOR_VIEW_AHEAD_M + VISOR_VIEW_BEHIND_M);
-    int row = road_top + (int)((float)road_height * share) - HEIGHT / 40;
+    /* Walked up the middle rather than across it. The road is narrower than the
+     * rider is wide, so sideways the marker simply covers it; the join that has
+     * to stay visible is the one straight ahead, where the road runs out from
+     * under the rider's nose. */
     int centre = WIDTH / 2;
+    int y = (int)((float)HEIGHT * VISOR_VIEW_RIDER);
 
-    check(is_content(pixels[row * WIDTH + centre]), "the rider is drawn");
+    check(is_content(pixels[y * WIDTH + centre]), "the rider is drawn");
 
-    /* Walking out from the middle: the rider, then something dark, then the
-     * road. Miss the dark and the two whites are touching. */
-    int x = centre;
-    while (x < WIDTH && is_content(pixels[row * WIDTH + x])) {
-        x++;
+    while (y > 0 && is_content(pixels[y * WIDTH + centre])) {
+        y--;
     }
 
     int gap = 0;
-    while (x < WIDTH && !is_content(pixels[row * WIDTH + x])) {
+    while (y > 0 && !is_content(pixels[y * WIDTH + centre])) {
         gap++;
-        x++;
+        y--;
     }
 
     check(gap > 0, "a dark edge follows it");
-    check(x < WIDTH && is_content(pixels[row * WIDTH + x]), "and then the road resumes");
+    check(y > 0 && is_content(pixels[y * WIDTH + centre]), "and then the road resumes");
 }
 
 /* The layout has to hold on round glass, and the awkward case is a four figure

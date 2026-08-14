@@ -135,16 +135,8 @@ static void render_rider(const visor_canvas_t *canvas, uint16_t colour, float x,
 
 static void render_road(const visor_canvas_t *canvas,
                         const visor_hud_state_t *state,
-                        int64_t now_us,
-                        int top,
-                        int height)
+                        int64_t now_us)
 {
-    visor_canvas_t panel = {
-        .pixels = canvas->pixels + (size_t)top * (size_t)canvas->width,
-        .width = canvas->width,
-        .height = height,
-    };
-
     if (!state->has_path) {
         return;
     }
@@ -157,9 +149,9 @@ static void render_road(const visor_canvas_t *canvas,
                        crossing,
                        &view);
 
-    visor_frame_t frame = visor_frame_make(panel.width, panel.height);
+    visor_frame_t frame = visor_frame_make(canvas->width, canvas->height);
     uint16_t colour = road_colour(state);
-    float thickness = (float)canvas->width * 0.055f;
+    float thickness = (float)canvas->width * 0.036f;
 
     visor_pt_t road[VISOR_VIEW_SAMPLES];
     int here = 0;
@@ -174,23 +166,92 @@ static void render_road(const visor_canvas_t *canvas,
 
     /* Road already ridden in grey, road still to ride in white. The rider is
      * the join between them, so which way they are pointing needs no arrow to
-     * explain it. */
-    visor_draw_polyline(&panel, road, here + 1, thickness * 0.75f, COLOUR_BEHIND);
-    visor_draw_polyline(&panel, road + here, VISOR_VIEW_SAMPLES - here, thickness, colour);
+     * explain it.
+     *
+     * Nothing is drawn at the junction. The bend is the turn, and a mark on top
+     * of it was one more thing on the glass saying what the shape already said.
+     */
+    visor_draw_polyline(canvas, road, here + 1, thickness * 0.75f, COLOUR_BEHIND);
+    visor_draw_polyline(canvas, road + here, VISOR_VIEW_SAMPLES - here, thickness, colour);
 
-    if (view.has_junction) {
-        visor_pt_t at = {
-            visor_frame_x(&frame, view.junction.right_m),
-            visor_frame_y(&frame, view.junction.ahead_m),
-        };
-        /* A hole punched in the road rather than a blob laid on top of it. The
-         * bend already shows where the turn is; this only says which bend. */
-        visor_draw_disc(&panel, at, thickness * 0.34f, COLOUR_BACKGROUND);
+    /* Last, so nothing is ever drawn over the rider. Where they are is the one
+     * thing on this display that must never be ambiguous. */
+    render_rider(canvas, colour, frame.centre_x, frame.rider_y);
+}
+
+/* A frosted strip along the bottom for the readings to sit on.
+ *
+ * Blurred rather than merely darkened, and the road is why: a hard white line
+ * passing behind white digits is unreadable, while a soft one is a glow. One
+ * pass across is enough for that. Blurring downwards as well would want a copy
+ * of the whole strip, and there is nothing in it but the road to justify the
+ * memory.
+ *
+ * It is a layer over the map rather than a band beside it, which is what lets
+ * the map have the whole of the glass. On a round panel that matters twice
+ * over: the area is small to begin with, and cutting a rectangle out of a
+ * circle wastes the parts that were never square.
+ */
+static void render_frost(const visor_canvas_t *canvas, int top)
+{
+    enum { WIDEST = 512 };
+    static uint16_t source[WIDEST];
+
+    int width = canvas->width;
+    if (width > WIDEST || width < 3) {
+        return;
     }
 
-    /* Last inside the map, so nothing is ever drawn over the rider. Where they
-     * are is the one thing on this display that must never be ambiguous. */
-    render_rider(&panel, colour, frame.centre_x, frame.rider_y);
+    int reach = width / 36;
+    if (reach < 1) {
+        reach = 1;
+    }
+
+    int tint_r = (COLOUR_BAND >> 11) & 0x1F;
+    int tint_g = (COLOUR_BAND >> 5) & 0x3F;
+    int tint_b = COLOUR_BAND & 0x1F;
+
+    for (int y = top; y < canvas->height; y++) {
+        uint16_t *row = canvas->pixels + (size_t)y * (size_t)width;
+        for (int x = 0; x < width; x++) {
+            source[x] = row[x];
+        }
+
+        int sum_r = 0, sum_g = 0, sum_b = 0, count = 0;
+        for (int x = 0; x <= reach && x < width; x++) {
+            sum_r += (source[x] >> 11) & 0x1F;
+            sum_g += (source[x] >> 5) & 0x3F;
+            sum_b += source[x] & 0x1F;
+            count++;
+        }
+
+        for (int x = 0; x < width; x++) {
+            if (x > 0) {
+                int leaving = x - reach - 1;
+                int entering = x + reach;
+                if (leaving >= 0) {
+                    sum_r -= (source[leaving] >> 11) & 0x1F;
+                    sum_g -= (source[leaving] >> 5) & 0x3F;
+                    sum_b -= source[leaving] & 0x1F;
+                    count--;
+                }
+                if (entering < width) {
+                    sum_r += (source[entering] >> 11) & 0x1F;
+                    sum_g += (source[entering] >> 5) & 0x3F;
+                    sum_b += source[entering] & 0x1F;
+                    count++;
+                }
+            }
+
+            /* A third of what was there, on top of a tint. Multiplying alone
+             * would leave the strip as black as the map and there would be no
+             * layer to see. */
+            int r = ((sum_r / count) * 34 + tint_r * 66) / 100;
+            int g = ((sum_g / count) * 34 + tint_g * 66) / 100;
+            int b = ((sum_b / count) * 34 + tint_b * 66) / 100;
+            row[x] = (uint16_t)((r << 11) | (g << 5) | b);
+        }
+    }
 }
 
 static void render_instruction(const visor_canvas_t *canvas,
@@ -237,7 +298,7 @@ static void render_instruction(const visor_canvas_t *canvas,
     float left = (float)canvas->width * 0.5f - total * 0.5f;
 
     visor_pt_t arrow = { left + size, middle_y };
-    visor_draw_maneuver(canvas, state->guidance.maneuver, arrow, size, COLOUR_TEXT, COLOUR_BACKGROUND);
+    visor_draw_maneuver(canvas, state->guidance.maneuver, arrow, size, COLOUR_TEXT, COLOUR_BAND);
 
     visor_pt_t at = { left + size * 2.0f + gap, middle_y - digits * 0.5f };
     visor_draw_number(canvas, metres, at, digits, COLOUR_TEXT);
@@ -262,9 +323,9 @@ static void render_flags(const visor_canvas_t *canvas, const visor_hud_state_t *
         { VISOR_FLAG_WEAK_GPS, visor_rgb(240, 220, 0) },
     };
 
-    float spacing = (float)canvas->width * 0.11f;
+    float spacing = (float)canvas->width * 0.085f;
     float centre = (float)canvas->width * 0.5f;
-    float radius = (float)canvas->width * 0.029f;
+    float radius = (float)canvas->width * 0.022f;
 
     for (int index = 0; index < 3; index++) {
         visor_pt_t at = { centre + (float)(index - 1) * spacing, (float)row };
@@ -280,20 +341,18 @@ void visor_hud_render(const visor_canvas_t *canvas,
 {
     visor_draw_fill(canvas, COLOUR_BACKGROUND);
 
-    /* Laid out down the middle of the glass rather than out to its edges. On a
-     * round panel the corners simply are not there, and a layout that pretends
-     * otherwise loses whatever it puts in them. On a square one this reads as
-     * generous margins, which is a cheap price for one layout instead of two.
-     */
-    int instruction_top = canvas->height * 14 / 100;
-    int instruction_height = canvas->height * 26 / 100;
-    int road_top = canvas->height * 42 / 100;
-    int road_height = canvas->height * 44 / 100;
-    int lamp_row = canvas->height * 91 / 100;
+    /* The map has the whole panel. What a rider needs to read sits on a frosted
+     * layer over the bottom of it, and the rider marker is placed high enough
+     * that it never reaches that layer. */
+    int frost_top = canvas->height * 68 / 100;
+    int instruction_top = canvas->height * 695 / 1000;
+    int instruction_height = canvas->height * 19 / 100;
+    int lamp_row = canvas->height * 935 / 1000;
+
+    render_road(canvas, state, now_us);
+    render_frost(canvas, frost_top);
 
     float room = band_half_width(canvas, shape, instruction_top, instruction_top + instruction_height);
-
     render_instruction(canvas, state, instruction_top, instruction_height, room);
-    render_road(canvas, state, now_us, road_top, road_height);
     render_flags(canvas, state, lamp_row);
 }

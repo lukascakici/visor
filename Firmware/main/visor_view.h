@@ -28,7 +28,15 @@
  * and every packet ends in what looks like a turn.
  */
 #define VISOR_VIEW_AHEAD_M 450.0f
-#define VISOR_VIEW_BEHIND_M 60.0f
+
+/* Where the rider sits down the panel, as a fraction of its height.
+ *
+ * High enough that the readings can be laid over the bottom of the map without
+ * ever touching the rider, and low enough that most of the glass is road ahead.
+ * Whatever is left below them is how much road behind fits, which is more than
+ * the phone bothers to send.
+ */
+#define VISOR_VIEW_RIDER 0.60f
 
 /* Points the road is redrawn with. Both packets are resampled to this many so
  * they can be crossed between; the wire's own points are unevenly spaced and
