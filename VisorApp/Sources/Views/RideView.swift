@@ -39,13 +39,13 @@ struct RideView: View {
             }
         }
         .onAppear {
-            camera = .region(region(around: session.route.polyline.first))
+            camera = .region(region(around: session.riderPosition))
             session.start()
         }
-        .onChange(of: session.state.progress?.snapped) { _, snapped in
-            guard let snapped else { return }
+        .onChange(of: session.riderPosition) { _, position in
+            guard let position else { return }
             withAnimation(.easeInOut(duration: 0.9)) {
-                camera = .region(region(around: snapped))
+                camera = .region(region(around: position))
             }
         }
     }
@@ -57,8 +57,9 @@ struct RideView: View {
                 .font(.system(size: 13, weight: .semibold))
 
             VStack(alignment: .leading, spacing: 1) {
-                Text(session.destination?.name ?? "Demo route")
+                Text(session.destination?.name ?? (session.isGuiding ? "Demo route" : "Where to?"))
                     .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(session.isGuiding ? .primary : .secondary)
                     .lineLimit(1)
                 if let problem = session.routingProblem {
                     Text(problem)
@@ -72,7 +73,7 @@ struct RideView: View {
 
             if session.isPlanning {
                 ProgressView().controlSize(.small)
-            } else if session.destination != nil {
+            } else if session.destination != nil || !session.isGuiding {
                 Button("Demo") { session.useDemoRoute() }
                     .font(.system(size: 12, weight: .semibold))
                     .buttonStyle(.bordered)
@@ -120,14 +121,28 @@ struct RideView: View {
 
     private var map: some View {
         Map(position: $camera) {
-            MapPolyline(coordinates: session.route.polyline.map(\.asCLCoordinate))
-                .stroke(.cyan.opacity(0.85), style: StrokeStyle(lineWidth: 7, lineCap: .round, lineJoin: .round))
+            // Only a route the rider is actually on gets drawn. The demo route
+            // sitting in memory before a destination is chosen belongs to
+            // someone else's ride.
+            if session.isGuiding {
+                MapPolyline(coordinates: session.route.polyline.map(\.asCLCoordinate))
+                    .stroke(.cyan.opacity(0.85), style: StrokeStyle(lineWidth: 7, lineCap: .round, lineJoin: .round))
 
-            if let destination = session.route.polyline.last {
-                Annotation("", coordinate: destination.asCLCoordinate) {
-                    Image(systemName: "flag.checkered.circle.fill")
-                        .font(.title2)
-                        .foregroundStyle(.white, .black)
+                if let destination = session.route.polyline.last {
+                    Annotation("", coordinate: destination.asCLCoordinate) {
+                        Image(systemName: "flag.checkered.circle.fill")
+                            .font(.title2)
+                            .foregroundStyle(.white, .black)
+                    }
+                }
+            }
+
+            if let here = session.lastFix, !session.isGuiding {
+                Annotation("", coordinate: here.asCLCoordinate) {
+                    Circle()
+                        .fill(.cyan)
+                        .stroke(.white, lineWidth: 3)
+                        .frame(width: 20, height: 20)
                 }
             }
 

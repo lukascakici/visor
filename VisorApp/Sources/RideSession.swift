@@ -31,14 +31,30 @@ final class RideSession {
     /// What went wrong the last time a route was asked for.
     private(set) var routingProblem: String?
     private(set) var isPlanning = false
+    /// The last position the receiver reported, untouched by any route.
+    ///
+    /// Kept apart from `progress.snapped` on purpose. Snapping answers "where
+    /// am I on this route", which is the wrong question when the route is not
+    /// the rider's: planning a new one from a snapped position starts it
+    /// wherever the old route happened to run.
+    private(set) var lastFix: Coordinate?
 
     var scenario: Scenario = .ride {
         didSet { restart() }
     }
 
-    var source: Source = .replay {
+    /// Live by default, because this is a navigation app and a rider opening it
+    /// is somewhere. The scripted ride is a development aid, not a home screen.
+    var source: Source = .device {
         didSet { restart() }
     }
+
+    /// Whether the loaded route is this rider's route.
+    ///
+    /// Before a destination is chosen there is only the demo route, which
+    /// belongs to a rider in Kadikoy. Feeding real fixes into it would produce
+    /// confident instructions about roads nowhere near the phone.
+    var isGuiding: Bool { destination != nil || source == .replay }
 
     /// The radio. Observed through its own properties, so the screen can show
     /// what the link is doing without this having to mirror any of it.
@@ -53,7 +69,9 @@ final class RideSession {
     init() {
         let route = DemoRoute.make()
         let engine = GuidanceEngine(route: route)
-        let locations = ReplaySource(route: route, scenario: .ride)
+        // Matches the default source above. The two have to be built together
+        // or the first ride runs on a receiver nobody selected.
+        let locations = DeviceLocationSource()
 
         self.route = route
         self.engine = engine
@@ -103,10 +121,16 @@ final class RideSession {
 
     // MARK: - Choosing where to go
 
-    /// Where a route would start from: wherever the rider is, or the demo
-    /// route's origin before anything has been heard from the receiver.
+    /// Where a route would start from: wherever the rider actually is, or the
+    /// demo route's origin before anything has been heard from the receiver.
     var origin: Coordinate {
-        state.progress?.snapped ?? route.polyline.first ?? DemoRoute.origin
+        lastFix ?? route.polyline.first ?? DemoRoute.origin
+    }
+
+    /// Where to point the map: on the route while it is being ridden, at the
+    /// raw fix when there is no route to be on.
+    var riderPosition: Coordinate? {
+        state.progress?.snapped ?? lastFix
     }
 
     /// Asks the map service for a route to `place` and rides it.
@@ -127,11 +151,16 @@ final class RideSession {
     }
 
     /// Goes back to the hand-built route, which needs no network.
+    ///
+    /// Switches to the scripted rider along with it: the demo route runs
+    /// through Kadikoy, and riding it from anywhere else is not a demonstration
+    /// of anything.
     func useDemoRoute() {
         pendingReroute?.cancel()
         destination = nil
         routingProblem = nil
         route = DemoRoute.make()
+        source = .replay
         restart()
         start()
     }
@@ -140,7 +169,12 @@ final class RideSession {
 
     private func tick() {
         if let fix = locations.tick() {
-            engine.receive(fix)
+            lastFix = fix.coordinate
+            // Withheld until there is a route worth measuring against. The
+            // engine has no way of knowing the route it was handed is not the
+            // one under the rider, and would report progress along it either
+            // way.
+            if isGuiding { engine.receive(fix) }
         }
 
         let now = locations.now

@@ -51,6 +51,8 @@ public final class HUDLink: NSObject {
     @ObservationIgnored private var display: CBPeripheral?
     @ObservationIgnored private var characteristic: CBCharacteristic?
     @ObservationIgnored private var pathCharacteristic: CBCharacteristic?
+    /// The one path waiting for the radio to be ready, if any.
+    @ObservationIgnored private var pending: PathPacket?
 
     // Instance properties rather than statics: CBUUID is not Sendable, and a
     // shared global of one would be a data race waiting to be noticed.
@@ -86,6 +88,7 @@ public final class HUDLink: NSObject {
         display = nil
         characteristic = nil
         pathCharacteristic = nil
+        pending = nil
         state = central == nil ? .starting : .searching
     }
 
@@ -129,13 +132,27 @@ public final class HUDLink: NSObject {
     /// Send this *after* the guidance packet, never before. When the radio can
     /// only take one write, the one it takes has to be the turn: a rider can
     /// ride without the map and cannot ride without the instruction.
+    ///
+    /// Which is exactly why the map cannot be dropped the way the instruction
+    /// is. Sending two writes back to back is what fills the radio's buffer, so
+    /// the second one is the one that finds it full — every second, forever.
+    /// Instead the newest map waits for the radio to say it is ready. One
+    /// waiting, never a queue: if a fresher path turns up first, it replaces
+    /// the one waiting, because nobody wants last second's road.
     public func send(_ path: PathPacket) {
-        guard let display, let pathCharacteristic, state == .connected else { return }
+        guard let display, pathCharacteristic != nil, state == .connected else { return }
 
         guard display.canSendWriteWithoutResponse else {
-            writesDropped += 1
+            if pending != nil { writesDropped += 1 }
+            pending = path
             return
         }
+
+        write(path)
+    }
+
+    private func write(_ path: PathPacket) {
+        guard let display, let pathCharacteristic else { return }
 
         let limit = display.maximumWriteValueLength(for: .withoutResponse)
         display.writeValue(path.encoded(maximumSize: limit), for: pathCharacteristic, type: .withoutResponse)
@@ -216,6 +233,7 @@ extension HUDLink: CBCentralManagerDelegate {
     ) {
         characteristic = nil
         pathCharacteristic = nil
+        pending = nil
         beginScanning(with: central)
     }
 
@@ -226,6 +244,7 @@ extension HUDLink: CBCentralManagerDelegate {
     ) {
         characteristic = nil
         pathCharacteristic = nil
+        pending = nil
         state = .connecting
         // Left pending on purpose: this is the request that reconnects by
         // itself when the display comes back.
@@ -261,7 +280,11 @@ extension HUDLink: CBPeripheralDelegate {
     }
 
     public func peripheralIsReady(toSendWriteWithoutResponse peripheral: CBPeripheral) {
-        // Nothing to flush: the next packet is a second away and will be more
-        // accurate than anything held back would have been.
+        // Only the map is ever held back. A guidance packet that missed its
+        // turn is not flushed here: by now the next one is nearly due and it
+        // carries better numbers.
+        guard let path = pending else { return }
+        pending = nil
+        write(path)
     }
 }
