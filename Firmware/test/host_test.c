@@ -423,6 +423,57 @@ static void test_denser_glass(void)
     }
 }
 
+/* Straight ahead, no junction: 100 m of road behind and 300 m in front. */
+static const uint8_t STRAIGHT[] = {
+    0x01, 0x03, 0xFF, 0x00,
+    0x00, 0x00, 0x18, 0xFC,
+    0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0xB8, 0x0B,
+};
+
+/* The rider and the road are both white, and a white marker on a white road is
+ * no marker at all. What keeps them apart is a dark edge around the rider, and
+ * it is the sort of thing that goes missing in a layout change without anyone
+ * noticing until they are riding.
+ */
+static void test_the_rider_stays_visible_on_the_road(void)
+{
+    printf("the rider against the road\n");
+
+    visor_canvas_t canvas = { pixels, WIDTH, HEIGHT };
+    visor_hud_state_t state;
+    visor_hud_reset(&state);
+
+    visor_hud_receive_guidance(&state, GUIDANCE, sizeof(GUIDANCE));
+    visor_hud_receive_path(&state, STRAIGHT, sizeof(STRAIGHT), 1000000);
+    visor_hud_render(&canvas, &state, 1000000, VISOR_PANEL_ROUND);
+
+    /* A row through the rider, above its widest part, where the road is still
+     * wider than it is. */
+    int road_top = HEIGHT * 42 / 100;
+    int road_height = HEIGHT * 44 / 100;
+    int row = road_top + road_height * 300 / 360 - HEIGHT / 40;
+    int centre = WIDTH / 2;
+
+    check(is_content(pixels[row * WIDTH + centre]), "the rider is drawn");
+
+    /* Walking out from the middle: the rider, then something dark, then the
+     * road. Miss the dark and the two whites are touching. */
+    int x = centre;
+    while (x < WIDTH && is_content(pixels[row * WIDTH + x])) {
+        x++;
+    }
+
+    int gap = 0;
+    while (x < WIDTH && !is_content(pixels[row * WIDTH + x])) {
+        gap++;
+        x++;
+    }
+
+    check(gap > 0, "a dark edge follows it");
+    check(x < WIDTH && is_content(pixels[row * WIDTH + x]), "and then the road resumes");
+}
+
 /* The layout has to hold on round glass, and the awkward case is a four figure
  * distance in the narrowest part of the panel. */
 static void test_round_glass(void)
@@ -526,6 +577,7 @@ int main(int argc, char **argv)
     test_a_new_junction_does_not_slide();
     test_numbers();
     test_screen();
+    test_the_rider_stays_visible_on_the_road();
     test_round_glass();
     test_denser_glass();
 

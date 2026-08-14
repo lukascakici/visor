@@ -24,17 +24,6 @@ typedef struct {
     bool has_guidance;
     visor_guidance_t guidance;
 
-    /// The longest distance-to-go ever reported, taken as the length of the
-    /// route.
-    ///
-    /// Inferred rather than sent. The guidance packet has no room left for a
-    /// route length: byte ten onwards is the street name, and nothing can be
-    /// appended after a field that runs to the end. Watching the remaining
-    /// distance and keeping its high-water mark costs four bytes and is right
-    /// whenever a ride is joined at its start. Join one halfway and the arc
-    /// simply starts full, which is honest about what the device knows.
-    uint32_t route_length_m;
-
     bool has_path;
     visor_path_t path;
     visor_path_t previous_path;
