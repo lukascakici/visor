@@ -119,6 +119,28 @@ final class MapLinkTests: XCTestCase {
 
     // MARK: - What should not be read
 
+    /// What a Google share actually expands to, taken off the wire from a real
+    /// one. There is no position in it anywhere: an address, and two
+    /// identifiers that mean something only inside Google. Anyone building this
+    /// expecting coordinates builds the wrong thing.
+    func testAGoogleShareExpandsToAnAddressAndNotAPosition() {
+        let expanded = "https://www.google.com/maps?q=Vodafone+genel+m%C3%BCd%C3%BCrl%C3%BCk,"
+            + "+19+May%C4%B1s,+B%C3%BCy%C3%BCkdere+Cd.+253-1,+34398+%C5%9Ei%C5%9Fli/%C4%B0stanbul"
+            + "&ftid=0x14cab5959829708f:0x81025573ac77abc8&entry=gps&shh=CAE"
+
+        XCTAssertNil(MapLinkReader.parse(expanded))
+        XCTAssertEqual(
+            MapLinkReader.placeQuery(in: expanded),
+            "Vodafone genel müdürlük, 19 Mayıs, Büyükdere Cd. 253-1, 34398 Şişli/İstanbul"
+        )
+    }
+
+    func testAnAddressIsOnlyOfferedWhenThereIsNoPosition() {
+        // A link that does say where does not need geocoding, and geocoding it
+        // anyway would trade an exact position for an approximate one.
+        XCTAssertNil(MapLinkReader.placeQuery(in: "https://maps.apple.com/?ll=40.9782,29.0640&q=Bostanci"))
+    }
+
     func testAShortenedLinkIsRecognisedRatherThanGuessedAt() {
         // There is nothing in these to read. Saying so is what lets the app go
         // and follow it instead of silently failing.

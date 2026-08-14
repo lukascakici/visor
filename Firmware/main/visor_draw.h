@@ -77,6 +77,35 @@ float visor_draw_number(const visor_canvas_t *canvas,
 /* How wide `value` will be at `height`, without drawing it. */
 float visor_draw_number_width(uint32_t value, float height);
 
+/* A lowercase m, for the unit under a distance.
+ *
+ * The one letter this display can spell, and the only one it needs: a bare
+ * number on a HUD is ambiguous in a way that matters, and drawing three strokes
+ * is cheaper than carrying a font for them.
+ */
+void visor_draw_metres(const visor_canvas_t *canvas, visor_pt_t at, float height, uint16_t colour);
+float visor_draw_metres_width(float height);
+
+/* An arc of a circle, stroked.
+ *
+ * Angles in degrees, measured from three o'clock and running clockwise down the
+ * screen, so 90 is the bottom of the circle.
+ */
+void visor_draw_arc(const visor_canvas_t *canvas,
+                    visor_pt_t centre,
+                    float radius,
+                    float from_degrees,
+                    float to_degrees,
+                    float width,
+                    uint16_t colour);
+
+/* A ring: the outline of a circle rather than the whole of it. */
+void visor_draw_ring(const visor_canvas_t *canvas,
+                     visor_pt_t centre,
+                     float radius,
+                     float width,
+                     uint16_t colour);
+
 /* The maneuver as an arrow, centred on `at` and fitting a box of `size`.
  *
  * `hole` is what shows through the middle of the arrival marker; everywhere

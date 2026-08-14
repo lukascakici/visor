@@ -134,17 +134,29 @@ struct DestinationSearch: View {
         defer { isSearching = false }
 
         do {
-            guard let link = try await MapLinkReader.resolve(text) else {
-                problem = "That link does not carry a position"
-                results = []
-                return
-            }
+            switch try await MapLinkReader.resolve(text) {
+            case .position(let link):
+                results = [Place(
+                    name: link.name ?? "Shared destination",
+                    address: String(format: "%.5f, %.5f", link.coordinate.latitude, link.coordinate.longitude),
+                    coordinate: link.coordinate
+                )]
 
-            results = [Place(
-                name: link.name ?? "Shared destination",
-                address: String(format: "%.5f, %.5f", link.coordinate.latitude, link.coordinate.longitude),
-                coordinate: link.coordinate
-            )]
+            case .address(let address):
+                // Half of these links carry no position, only the address they
+                // were shared as. Which is the better half of the bargain: the
+                // rider searched somewhere that knows the place, and a full
+                // postal address is a far surer thing to geocode than anything
+                // they would have typed here.
+                results = try await PlaceSearch().find(address, near: origin)
+                if results.isEmpty {
+                    problem = "Could not find \"\(address)\""
+                }
+
+            case .none:
+                problem = "That link does not carry a place"
+                results = []
+            }
         } catch {
             guard !Task.isCancelled else { return }
             // Said plainly rather than as a URLError: the rider is holding a

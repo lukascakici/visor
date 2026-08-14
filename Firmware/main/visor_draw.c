@@ -251,6 +251,64 @@ float visor_draw_number(const visor_canvas_t *canvas,
     return (float)count * w + (float)(count - 1) * gap;
 }
 
+float visor_draw_metres_width(float height)
+{
+    return height * 0.95f;
+}
+
+void visor_draw_metres(const visor_canvas_t *canvas, visor_pt_t at, float height, uint16_t colour)
+{
+    float width = visor_draw_metres_width(height);
+    float thickness = height * 0.26f;
+
+    /* One bar across the top and three coming down from it. Blocky, but at the
+     * size a unit is drawn nobody reads the letterform, they read that there is
+     * a letter and which one it starts like. */
+    bar(canvas, at.x, at.y, width, thickness, colour);
+    bar(canvas, at.x, at.y, thickness, height, colour);
+    bar(canvas, at.x + (width - thickness) * 0.5f, at.y, thickness, height, colour);
+    bar(canvas, at.x + width - thickness, at.y, thickness, height, colour);
+}
+
+/* --- arcs ------------------------------------------------------------------ */
+
+void visor_draw_arc(const visor_canvas_t *canvas,
+                    visor_pt_t centre,
+                    float radius,
+                    float from_degrees,
+                    float to_degrees,
+                    float width,
+                    uint16_t colour)
+{
+    /* Enough steps that the corners between them fall inside the stroke, which
+     * is what makes a polyline pass for a curve. */
+    int steps = (int)(fabsf(to_degrees - from_degrees) / 3.0f) + 2;
+    visor_pt_t previous = { 0.0f, 0.0f };
+
+    for (int step = 0; step <= steps; step++) {
+        float angle = (from_degrees + (to_degrees - from_degrees) * (float)step / (float)steps);
+        float radians = angle * 3.14159265f / 180.0f;
+        visor_pt_t at = {
+            centre.x + cosf(radians) * radius,
+            centre.y + sinf(radians) * radius,
+        };
+
+        if (step > 0) {
+            visor_draw_line(canvas, previous, at, width, colour);
+        }
+        previous = at;
+    }
+}
+
+void visor_draw_ring(const visor_canvas_t *canvas,
+                     visor_pt_t centre,
+                     float radius,
+                     float width,
+                     uint16_t colour)
+{
+    visor_draw_arc(canvas, centre, radius, 0.0f, 360.0f, width, colour);
+}
+
 /* --- maneuvers ------------------------------------------------------------- */
 
 /* Each arrow is a short path in a unit box, y up, with the head put on the end

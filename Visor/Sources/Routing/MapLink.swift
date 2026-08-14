@@ -14,6 +14,20 @@ public struct MapLink: Hashable, Sendable {
     }
 }
 
+/// What a shared link turned out to be pointing at.
+///
+/// Two outcomes rather than one, because half of these links do not carry a
+/// position at all. A Google share expands to an address and a pair of internal
+/// identifiers, and no amount of parsing will find coordinates that were never
+/// written down. What it does carry is the full postal address, which is a far
+/// better thing to hand a geocoder than whatever a rider would have typed.
+public enum SharedDestination: Hashable, Sendable {
+    /// The link said exactly where.
+    case position(MapLink)
+    /// The link named a place and left finding it to us.
+    case address(String)
+}
+
 /// Reads a shared link and finds the place in it.
 ///
 /// This exists because searching inside this app will always be worse than
@@ -109,32 +123,56 @@ public enum MapLinkReader {
         return nil
     }
 
-    /// Follows a shortened link and reads whatever it expands to.
+    /// Follows a shared link and reads whatever it expands to.
     ///
     /// The expansion is read off the URL the server redirects to rather than
-    /// out of the page, so nothing here parses HTML and no key is needed. A
-    /// HEAD would be tidier, but these hosts answer it inconsistently.
-    public static func resolve(_ text: String, using session: URLSession = .shared) async throws -> MapLink? {
+    /// out of the page, so nothing here parses HTML and no key is needed.
+    public static func resolve(
+        _ text: String,
+        using session: URLSession = .shared
+    ) async throws -> SharedDestination? {
         if let direct = parse(text) {
-            return direct
+            return .position(direct)
+        }
+        if let named = placeQuery(in: text) {
+            return .address(named)
         }
 
         guard let link = firstLink(in: text), let url = URL(string: link) else { return nil }
 
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
-        request.timeoutInterval = 10
-        // Asking as a browser, because these hosts answer a bare client with a
-        // consent page that redirects nowhere useful.
+        request.timeoutInterval = 15
+        // Asked for as the phone this is running on. Not a flourish: given a
+        // desktop browser Google answers a short link with an interstitial page
+        // and no redirect at all, and there is then nothing to read.
         request.setValue(
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15",
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15"
+                + " (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
             forHTTPHeaderField: "User-Agent"
         )
 
         let (_, response) = try await session.data(for: request)
         guard let final = response.url?.absoluteString else { return nil }
 
-        return parse(final)
+        if let position = parse(final) {
+            return .position(position)
+        }
+        if let named = placeQuery(in: final) {
+            return .address(named)
+        }
+        return nil
+    }
+
+    /// The place a link names when it declines to say where that place is.
+    ///
+    /// This is the usual shape of a Google share: an address, and a pair of
+    /// identifiers that mean something only inside Google. The address is the
+    /// part worth keeping.
+    public static func placeQuery(in text: String) -> String? {
+        guard let link = firstLink(in: text) else { return nil }
+        guard parse(link) == nil else { return nil }
+        return placeName(in: link)
     }
 
     // MARK: - Picking the link out

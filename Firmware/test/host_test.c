@@ -280,14 +280,37 @@ static int lit_pixels(void)
     return lit;
 }
 
-/* Anything lit outside the glass is something a rider will never see. */
+/* Whether a pixel is something a rider is meant to read, rather than the ground
+ * it is drawn on. The band runs to the edge of the glass on purpose, the way a
+ * chord does; what must never run off it is a number, an arrow or a road. */
+static bool is_content(uint16_t pixel)
+{
+    int r = ((pixel >> 11) & 0x1F) * 255 / 31;
+    int g = ((pixel >> 5) & 0x3F) * 255 / 63;
+    int b = (pixel & 0x1F) * 255 / 31;
+    int brightest = r > g ? (r > b ? r : b) : (g > b ? g : b);
+    return brightest > 150;
+}
+
+static int content_pixels(void)
+{
+    int lit = 0;
+    for (int index = 0; index < WIDTH * HEIGHT; index++) {
+        if (is_content(pixels[index])) {
+            lit++;
+        }
+    }
+    return lit;
+}
+
+/* Anything readable outside the glass is something a rider will never see. */
 static int lit_off_the_glass(void)
 {
     int lost = 0;
     float radius = WIDTH / 2.0f;
 
     for (int index = 0; index < WIDTH * HEIGHT; index++) {
-        if (pixels[index] == 0) {
+        if (!is_content(pixels[index])) {
             continue;
         }
         float dx = (float)(index % WIDTH) - radius;
@@ -308,14 +331,16 @@ static void test_screen(void)
     visor_hud_reset(&state);
 
     visor_hud_render(&canvas, &state, 0, VISOR_PANEL_ROUND);
-    check(lit_pixels() > 0, "with no packets there is still something on screen");
-    int quiet = lit_pixels();
+    check(lit_pixels() > 0, "with no packets the panel is still laid out");
+    // Nothing to read, and nothing pretending there is. The rider chevron is
+    // the only bright thing a silent display shows.
+    int quiet = content_pixels();
 
     visor_hud_receive_guidance(&state, GUIDANCE, sizeof(GUIDANCE));
     visor_hud_receive_path(&state, PATH, sizeof(PATH), 1000000);
     visor_hud_render(&canvas, &state, 1000000, VISOR_PANEL_ROUND);
 
-    check(lit_pixels() > quiet * 10, "a packet fills the screen with a great deal more");
+    check(content_pixels() > quiet * 3, "a packet gives it a great deal to say");
     write_image("hud.ppm", true);
 
     /* The road is drawn in the road colour and the alarm colour never appears
@@ -366,7 +391,7 @@ static void test_denser_glass(void)
     int lost = 0;
     float radius = DENSE / 2.0f;
     for (int index = 0; index < DENSE * DENSE; index++) {
-        if (dense_pixels[index] == 0) {
+        if (!is_content(dense_pixels[index])) {
             continue;
         }
         float dx = (float)(index % DENSE) - radius;

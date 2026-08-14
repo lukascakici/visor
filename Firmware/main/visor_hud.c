@@ -4,9 +4,17 @@
 #include <string.h>
 
 /* Dark, because this is read at night as often as by day, and because every
- * unlit pixel is one that does not reflect back off the inside of a visor. */
-#define COLOUR_BACKGROUND visor_rgb(0, 0, 0)
-#define COLOUR_ROAD visor_rgb(0, 210, 235)
+ * unlit pixel is one that does not reflect back off the inside of a visor.
+ *
+ * The road is white rather than a colour. White is the brightest thing an
+ * emissive panel can put on black, which is the whole argument on glass a rider
+ * glances at, and it leaves colour free to mean something: nothing on this
+ * display is red unless something is wrong.
+ */
+#define COLOUR_BACKGROUND visor_rgb(6, 8, 14)
+#define COLOUR_BAND visor_rgb(22, 26, 34)
+#define COLOUR_ROAD visor_rgb(255, 255, 255)
+#define COLOUR_BEHIND visor_rgb(88, 95, 105)
 #define COLOUR_ALARM visor_rgb(255, 60, 50)
 #define COLOUR_TEXT visor_rgb(255, 255, 255)
 #define COLOUR_DIM visor_rgb(120, 130, 140)
@@ -26,6 +34,13 @@ void visor_hud_receive_guidance(visor_hud_state_t *state, const uint8_t *data, s
 
     state->guidance = decoded;
     state->has_guidance = true;
+
+    /* The high-water mark is the route length. It rises when a reroute makes
+     * the way home longer, which is exactly when the arc should give ground
+     * back. */
+    if (decoded.distance_remaining_m > state->route_length_m) {
+        state->route_length_m = decoded.distance_remaining_m;
+    }
 }
 
 void visor_hud_receive_path(visor_hud_state_t *state,
@@ -88,14 +103,9 @@ static float band_half_width(const visor_canvas_t *canvas, visor_panel_shape_t s
 static void render_road(const visor_canvas_t *canvas,
                         const visor_hud_state_t *state,
                         int64_t now_us,
-                        int top,
                         int height)
 {
-    visor_canvas_t panel = {
-        .pixels = canvas->pixels + (size_t)top * (size_t)canvas->width,
-        .width = canvas->width,
-        .height = height,
-    };
+    visor_canvas_t panel = { canvas->pixels, canvas->width, height };
 
     if (!state->has_path) {
         return;
@@ -111,90 +121,172 @@ static void render_road(const visor_canvas_t *canvas,
 
     visor_frame_t frame = visor_frame_make(panel.width, panel.height);
     uint16_t colour = road_colour(state);
+    float thickness = (float)canvas->width * 0.055f;
 
     visor_pt_t road[VISOR_VIEW_SAMPLES];
+    int here = 0;
     for (int index = 0; index < VISOR_VIEW_SAMPLES; index++) {
         road[index].x = visor_frame_x(&frame, view.road[index].right_m);
         road[index].y = visor_frame_y(&frame, view.road[index].ahead_m);
+
+        if (fabsf(view.road[index].ahead_m) < fabsf(view.road[here].ahead_m)) {
+            here = index;
+        }
     }
-    visor_draw_polyline(&panel, road, VISOR_VIEW_SAMPLES, 7.0f, colour);
+
+    /* Road already ridden in grey, road still to ride in white. The rider is
+     * the join between them, so which way they are pointing needs no arrow to
+     * explain it. */
+    visor_draw_polyline(&panel, road, here + 1, thickness * 0.75f, COLOUR_BEHIND);
+    visor_draw_polyline(&panel, road + here, VISOR_VIEW_SAMPLES - here, thickness, colour);
 
     if (view.has_junction) {
         visor_pt_t at = {
             visor_frame_x(&frame, view.junction.right_m),
             visor_frame_y(&frame, view.junction.ahead_m),
         };
-        visor_draw_disc(&panel, at, 9.0f, COLOUR_TEXT);
-        visor_draw_disc(&panel, at, 5.0f, colour);
+        /* A hole punched in the road rather than a blob laid on top of it. The
+         * bend already shows where the turn is; this only says which bend. */
+        visor_draw_disc(&panel, at, thickness * 0.34f, COLOUR_BACKGROUND);
     }
-
-    visor_pt_t rider = { frame.centre_x, frame.rider_y };
-    visor_pt_t nose = { rider.x, rider.y - 10.0f };
-    visor_pt_t left = { rider.x - 8.0f, rider.y + 8.0f };
-    visor_pt_t right = { rider.x + 8.0f, rider.y + 8.0f };
-    visor_draw_triangle(&panel, nose, left, right, COLOUR_TEXT);
 }
 
-static void render_instruction(const visor_canvas_t *canvas,
-                               const visor_hud_state_t *state,
-                               int top,
-                               int height,
-                               float half_width)
+/* The rider: a chevron, drawn as two triangles so it can have a notch.
+ *
+ * A plain triangle at this size reads as a blob. The notch is what makes it
+ * point. */
+static void render_rider(const visor_canvas_t *canvas, uint16_t colour, float centre_x, float y)
 {
-    float middle_y = (float)top + (float)height * 0.5f;
+    float size = (float)canvas->width * 0.062f;
+
+    visor_pt_t tip = { centre_x, y - size };
+    visor_pt_t notch = { centre_x, y + size * 0.28f };
+    visor_pt_t left = { centre_x - size * 0.86f, y + size * 0.60f };
+    visor_pt_t right = { centre_x + size * 0.86f, y + size * 0.60f };
+
+    visor_draw_triangle(canvas, tip, right, notch, colour);
+    visor_draw_triangle(canvas, tip, notch, left, colour);
+}
+
+/* The band along the bottom: what to do, how far, how fast, how much is left.
+ *
+ * Everything a rider acts on lives here, below the road and out of its way. The
+ * distance is the number they act on, so it gets the room, and it is never
+ * smoothed and never guessed at: it is whatever the last packet said.
+ */
+static void render_band(const visor_canvas_t *canvas,
+                        const visor_hud_state_t *state,
+                        int top,
+                        visor_panel_shape_t shape)
+{
+    float width = (float)canvas->width;
+    float height = (float)canvas->height;
+
+    /* A lighter ground under the readings, so they sit on something rather than
+     * floating over the road. */
+    visor_pt_t from = { 0.0f, (float)top + (height - (float)top) * 0.5f };
+    visor_pt_t to = { width, from.y };
+    visor_draw_line(canvas, from, to, height - (float)top, COLOUR_BAND);
+
+    /* The trail: where the rider has come from, carried on down through the
+     * band so the eye follows it out of the map. Drawn first, so the readings
+     * sit over it rather than beside it. */
+    visor_pt_t trail_top = { width * 0.5f, (float)top };
+    visor_pt_t trail_end = { width * 0.5f, height * 0.815f };
+    visor_draw_line(canvas, trail_top, trail_end, width * 0.038f, COLOUR_BEHIND);
 
     if (!state->has_guidance) {
-        visor_pt_t middle = { (float)canvas->width * 0.5f, middle_y };
-        visor_draw_disc(canvas, middle, 6.0f, COLOUR_DIM);
         return;
     }
 
-    /* The distance is the number a rider acts on, so it gets the room. It is
-     * never smoothed and never guessed at: it is whatever the last packet said,
-     * and if no packet has come the whole band stays empty.
-     *
-     * Arrow and number are measured together and centred as one, so the band
-     * does not lurch left and right as the distance loses a digit. */
+    uint16_t alarm = (state->guidance.flags & VISOR_FLAG_OFF_ROUTE) ? COLOUR_ALARM : COLOUR_TEXT;
+
+    visor_pt_t arrow = { width * 0.305f, height * 0.795f };
+    visor_draw_maneuver(canvas, state->guidance.maneuver, arrow, height * 0.100f, alarm, COLOUR_BAND);
+
+    /* Speed sits in a plain ring, not a roundel with a red border. That border
+     * means a limit everywhere in the world, and a limit is the one thing this
+     * display has no way of knowing. */
+    float radius = height * 0.074f;
+    visor_pt_t dial = { width * 0.838f, height * 0.752f };
+    visor_draw_ring(canvas, dial, radius, radius * 0.22f, COLOUR_DIM);
+
+    float speed_height = radius * 0.60f;
+    float speed_width = visor_draw_number_width(state->guidance.speed_kmh, speed_height);
+    visor_pt_t speed = { dial.x - speed_width * 0.5f, dial.y - speed_height * 0.5f };
+    visor_draw_number(canvas, state->guidance.speed_kmh, speed, speed_height, COLOUR_TEXT);
+
+    /* The distance starts where the trail runs, so the trail passes behind its
+     * first digit rather than through the middle of the number. */
+    float digits = height * 0.126f;
     uint32_t metres = state->guidance.distance_to_maneuver_m;
-    float size = (float)height * 0.44f;
-    float digits = (float)height * 0.58f;
-    float gap = (float)height * 0.18f;
-    float number = visor_draw_number_width(metres, digits);
-    float total = size * 2.0f + gap + number;
+    visor_pt_t number = { width * 0.505f, height * 0.722f };
 
-    /* Four digits are wider than three, and on round glass there may not be
-     * room for them. Shrinking the whole group keeps it readable and keeps it
-     * on the panel; letting it run off the edge would lose the leading digit,
-     * which is the one that matters. */
-    float room = half_width * 2.0f - 10.0f;
-    if (total > room && room > 0.0f) {
-        float shrink = room / total;
-        size *= shrink;
-        digits *= shrink;
-        gap *= shrink;
-        number = visor_draw_number_width(metres, digits);
-        total = size * 2.0f + gap + number;
+    /* Four digits are wider than three, and there is only so much band. What
+     * limits it is whichever comes first: the speed ring, or the edge of the
+     * glass. Shrinking keeps the number whole; letting it run on would cost
+     * either the leading digit or the speed, and both are worth more than the
+     * size of the type. */
+    float edge = band_half_width(canvas, shape, (int)number.y, (int)(number.y + digits));
+    float until_ring = dial.x - radius - width * 0.025f;
+    float until_edge = width * 0.5f + edge - width * 0.03f;
+    float room = (until_ring < until_edge ? until_ring : until_edge) - number.x;
+
+    float drawn_width = visor_draw_number_width(metres, digits);
+    if (drawn_width > room && room > 0.0f) {
+        digits *= room / drawn_width;
     }
 
-    float left = (float)canvas->width * 0.5f - total * 0.5f;
+    visor_draw_number(canvas, metres, number, digits, COLOUR_TEXT);
 
-    visor_pt_t arrow = { left + size, middle_y };
-    visor_draw_maneuver(canvas, state->guidance.maneuver, arrow, size, COLOUR_TEXT, COLOUR_BACKGROUND);
-
-    visor_pt_t at = { left + size * 2.0f + gap, middle_y - digits * 0.5f };
-    visor_draw_number(canvas, metres, at, digits, COLOUR_TEXT);
+    /* The unit, tucked under the number's first digit. A bare number on a HUD
+     * is ambiguous in a way that matters at speed. */
+    visor_pt_t unit = { number.x, number.y + digits + height * 0.014f };
+    visor_draw_metres(canvas, unit, height * 0.056f, COLOUR_DIM);
 }
 
-static void render_flags(const visor_canvas_t *canvas, const visor_hud_state_t *state, int row)
+/* How much of the ride is behind, drawn around the bottom of the glass.
+ *
+ * The one reading here that is inferred rather than received; see the note on
+ * `route_length_m`.
+ */
+static void render_progress(const visor_canvas_t *canvas, const visor_hud_state_t *state)
+{
+    if (!state->has_guidance || state->route_length_m == 0) {
+        return;
+    }
+
+    visor_pt_t centre = { (float)canvas->width * 0.5f, (float)canvas->height * 0.5f };
+    float radius = (float)canvas->width * 0.5f * 0.90f;
+    float thickness = (float)canvas->width * 0.018f;
+    float start = 148.0f;
+    float end = 32.0f;
+
+    visor_draw_arc(canvas, centre, radius, start, end, thickness, visor_rgb(52, 58, 66));
+
+    uint32_t left = state->guidance.distance_remaining_m;
+    if (left > state->route_length_m) {
+        left = state->route_length_m;
+    }
+    float done = 1.0f - (float)left / (float)state->route_length_m;
+    if (done <= 0.0f) {
+        return;
+    }
+
+    visor_draw_arc(canvas, centre, radius, start, start + (end - start) * done, thickness, COLOUR_TEXT);
+}
+
+/* Only the flags that are raised, and only when they are.
+ *
+ * A row of unlit lamps is furniture a rider learns to stop seeing, which is
+ * exactly the wrong thing to happen to a warning.
+ */
+static void render_flags(const visor_canvas_t *canvas, const visor_hud_state_t *state)
 {
     if (!state->has_guidance) {
         return;
     }
 
-    /* Three lamps rather than three words: at a glance a rider reads colour and
-     * position, and words would need the font this display does not carry.
-     * Centred, because on round glass the corners a status bar would live in
-     * are not there. */
     struct {
         uint8_t bit;
         uint16_t colour;
@@ -204,13 +296,28 @@ static void render_flags(const visor_canvas_t *canvas, const visor_hud_state_t *
         { VISOR_FLAG_WEAK_GPS, visor_rgb(240, 220, 0) },
     };
 
-    float spacing = (float)canvas->width * 0.11f;
+    float spacing = (float)canvas->width * 0.055f;
     float centre = (float)canvas->width * 0.5f;
+    float radius = (float)canvas->width * 0.017f;
 
+    int raised = 0;
     for (int index = 0; index < 3; index++) {
-        visor_pt_t at = { centre + (float)(index - 1) * spacing, (float)row };
-        bool on = (state->guidance.flags & lamps[index].bit) != 0;
-        visor_draw_disc(canvas, at, 7.0f, on ? lamps[index].colour : visor_rgb(28, 32, 36));
+        if (state->guidance.flags & lamps[index].bit) {
+            raised++;
+        }
+    }
+    if (raised == 0) {
+        return;
+    }
+
+    float x = centre - spacing * (float)(raised - 1) * 0.5f;
+    for (int index = 0; index < 3; index++) {
+        if ((state->guidance.flags & lamps[index].bit) == 0) {
+            continue;
+        }
+        visor_pt_t at = { x, (float)canvas->height * 0.075f };
+        visor_draw_disc(canvas, at, radius, lamps[index].colour);
+        x += spacing;
     }
 }
 
@@ -221,20 +328,20 @@ void visor_hud_render(const visor_canvas_t *canvas,
 {
     visor_draw_fill(canvas, COLOUR_BACKGROUND);
 
-    /* Laid out down the middle of the glass rather than out to its edges. On a
-     * round panel the corners simply are not there, and a layout that pretends
-     * otherwise loses whatever it puts in them. On a square one this reads as
-     * generous margins, which is a cheap price for one layout instead of two.
-     */
-    int instruction_top = canvas->height * 14 / 100;
-    int instruction_height = canvas->height * 26 / 100;
-    int road_top = canvas->height * 42 / 100;
-    int road_height = canvas->height * 44 / 100;
-    int lamp_row = canvas->height * 91 / 100;
+    /* The map runs the full width and most of the height; the readings sit in a
+     * band under it. On round glass that band is where the circle is narrowing,
+     * so everything in it is measured off the middle rather than off an edge
+     * that is not there. */
+    int map_height = canvas->height * 72 / 100;
+    int band_top = canvas->height * 70 / 100;
+    float rider_y = (float)canvas->height * 0.60f;
 
-    float room = band_half_width(canvas, shape, instruction_top, instruction_top + instruction_height);
+    render_road(canvas, state, now_us, map_height);
+    render_band(canvas, state, band_top, shape);
+    render_progress(canvas, state);
+    render_flags(canvas, state);
 
-    render_instruction(canvas, state, instruction_top, instruction_height, room);
-    render_road(canvas, state, now_us, road_top, road_height);
-    render_flags(canvas, state, lamp_row);
+    /* Last, so nothing is ever drawn over the rider. Where they are is the one
+     * thing on this display that must never be ambiguous. */
+    render_rider(canvas, road_colour(state), (float)canvas->width * 0.5f, rider_y);
 }
