@@ -9,11 +9,14 @@ import Transport
 /// shows.
 struct HUDView: View {
     let received: PeripheralServer.Received?
+    let path: DecodedPath?
 
     var body: some View {
         VStack(spacing: 0) {
             if let packet = received?.packet {
                 instruction(packet)
+                PathView(path: path, isOffRoute: packet.flags.contains(.offRoute))
+                    .padding(.top, 18)
                 readings(packet)
                 flags(packet)
             } else {

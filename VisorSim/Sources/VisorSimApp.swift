@@ -6,7 +6,7 @@ struct VisorSimApp: App {
     var body: some Scene {
         WindowGroup("Visor HUD Simulator") {
             SimulatorView()
-                .frame(minWidth: 620, minHeight: 640)
+                .frame(minWidth: 620, minHeight: 860)
                 .preferredColorScheme(.dark)
         }
         .windowResizability(.contentMinSize)
@@ -22,7 +22,7 @@ struct SimulatorView: View {
     var body: some View {
         VStack(spacing: 16) {
             header
-            HUDView(received: server.latest)
+            HUDView(received: server.latest, path: server.latestPath)
             log
         }
         .padding(16)
@@ -38,7 +38,7 @@ struct SimulatorView: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text(server.status.label)
                     .font(.system(size: 13, weight: .medium))
-                Text("\(server.packetCount) packets received")
+                Text("\(server.packetCount) packets, \(server.pathCount) maps received")
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
             }

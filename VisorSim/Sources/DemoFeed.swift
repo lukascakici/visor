@@ -55,8 +55,17 @@ final class DemoFeed {
             engine.receive(fix)
         }
 
-        let packet = HUDPacket(engine.state(at: now))
-        server.accept(packet.encoded(maximumSize: HUDPacket.guaranteedSize))
+        let state = engine.state(at: now)
+        server.accept(HUDPacket(state).encoded(maximumSize: HUDPacket.guaranteedSize))
+
+        // Sized as a roomy link would size it, since there is no link here to
+        // ask. The point of the demo feed is to show what the display does with
+        // a good packet, not what a poor connection does to one.
+        if let progress = state.progress {
+            let path = engine.index.path(at: progress, points: 40)
+            server.acceptPath(PathPacket(path).encoded(maximumSize: 512))
+        }
+
         second += 1
     }
 

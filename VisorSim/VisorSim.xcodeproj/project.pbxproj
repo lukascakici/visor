@@ -13,6 +13,7 @@
 		54D6906AE9AA1751F8DD1C87 /* DemoFeed.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946C703D2B7F7CFDB948F57A /* DemoFeed.swift */; };
 		5C775F6D3B62994A9B9D22DC /* PeripheralServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DC9BFC2CA4783EE6947E860 /* PeripheralServer.swift */; };
 		6B16DA00C0BE6FC119B61FCC /* HUDView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7B85E66DF5D7D88F78AE669 /* HUDView.swift */; };
+		708AFA1672E3189BA374B885 /* PathView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E753E3F87E5D03327436F15 /* PathView.swift */; };
 		C9232C68912DE7D3F0BF32DC /* VisorSimApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A90C7BDC71A264D5DACAD9 /* VisorSimApp.swift */; };
 		E869826C0BF12E1D9D90E6F3 /* Core in Frameworks */ = {isa = PBXBuildFile; productRef = F63860A0D8675C4CF558354C /* Core */; };
 /* End PBXBuildFile section */
@@ -20,6 +21,7 @@
 /* Begin PBXFileReference section */
 		31C22B42A5A4DA6784E61405 /* Visor */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Visor; path = ../Visor; sourceTree = SOURCE_ROOT; };
 		6DC9BFC2CA4783EE6947E860 /* PeripheralServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeripheralServer.swift; sourceTree = "<group>"; };
+		6E753E3F87E5D03327436F15 /* PathView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathView.swift; sourceTree = "<group>"; };
 		946C703D2B7F7CFDB948F57A /* DemoFeed.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoFeed.swift; sourceTree = "<group>"; };
 		BCB4B6DD4277D87B07D327CB /* VisorSim.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VisorSim.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D1A90C7BDC71A264D5DACAD9 /* VisorSimApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisorSimApp.swift; sourceTree = "<group>"; };
@@ -71,6 +73,7 @@
 			children = (
 				946C703D2B7F7CFDB948F57A /* DemoFeed.swift */,
 				E7B85E66DF5D7D88F78AE669 /* HUDView.swift */,
+				6E753E3F87E5D03327436F15 /* PathView.swift */,
 				6DC9BFC2CA4783EE6947E860 /* PeripheralServer.swift */,
 				D1A90C7BDC71A264D5DACAD9 /* VisorSimApp.swift */,
 			);
@@ -145,6 +148,7 @@
 			files = (
 				54D6906AE9AA1751F8DD1C87 /* DemoFeed.swift in Sources */,
 				6B16DA00C0BE6FC119B61FCC /* HUDView.swift in Sources */,
+				708AFA1672E3189BA374B885 /* PathView.swift in Sources */,
 				5C775F6D3B62994A9B9D22DC /* PeripheralServer.swift in Sources */,
 				C9232C68912DE7D3F0BF32DC /* VisorSimApp.swift in Sources */,
 			);

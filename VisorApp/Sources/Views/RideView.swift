@@ -101,12 +101,12 @@ struct RideView: View {
             Spacer()
 
             if session.link.packetsSent > 0 {
-                Text("\(session.link.packetsSent) sent · \(session.link.lastPacketSize) B")
+                Text("\(session.link.packetsSent) sent · \(session.link.pathsSent) maps · \(session.link.lastPacketSize) B")
                     .font(.system(size: 11, design: .monospaced))
                     .foregroundStyle(.secondary)
             }
-            if session.link.packetsDropped > 0 {
-                Text("\(session.link.packetsDropped) dropped")
+            if session.link.writesDropped > 0 {
+                Text("\(session.link.writesDropped) dropped")
                     .font(.system(size: 11, design: .monospaced))
                     .foregroundStyle(.orange)
             }

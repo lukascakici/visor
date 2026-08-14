@@ -42,9 +42,17 @@ final class PeripheralServer: NSObject, CBPeripheralManagerDelegate {
 
     private(set) var status: Status = .starting
     private(set) var latest: Received?
+    /// The shape of the road as last written, decoded from its own bytes.
+    ///
+    /// Held separately from `latest` because the two arrive on separate
+    /// characteristics and either can go missing on its own. A display still
+    /// showing a map while the instructions have stopped is a fault worth being
+    /// able to see rather than one to paper over.
+    private(set) var latestPath: DecodedPath?
     /// Newest first, capped: this is a window on a live link, not a recording.
     private(set) var recent: [Received] = []
     private(set) var packetCount = 0
+    private(set) var pathCount = 0
 
     @ObservationIgnored private var manager: CBPeripheralManager?
     @ObservationIgnored private var lastArrival: Date?
@@ -70,6 +78,14 @@ final class PeripheralServer: NSObject, CBPeripheralManagerDelegate {
         if status == .advertising { status = .receiving }
     }
 
+    /// Takes a path packet the same way, from the air or from the demo feed.
+    func acceptPath(_ data: Data) {
+        guard let path = DecodedPath(data) else { return }
+
+        latestPath = path
+        pathCount += 1
+    }
+
     // MARK: - CBPeripheralManagerDelegate
 
     func peripheralManagerDidUpdateState(_ peripheral: CBPeripheralManager) {
@@ -88,18 +104,25 @@ final class PeripheralServer: NSObject, CBPeripheralManagerDelegate {
     }
 
     private func publishService(on peripheral: CBPeripheralManager) {
+        // Write without response only, both of them. There is nothing useful to
+        // say back, and declaring it this way makes it impossible for a central
+        // to wait on an acknowledgement that will never matter.
         let characteristic = CBMutableCharacteristic(
             type: CBUUID(string: VisorService.packetCharacteristic),
-            // Write without response only. There is nothing useful to say back,
-            // and declaring it this way makes it impossible for a central to
-            // wait on an acknowledgement that will never matter.
+            properties: [.writeWithoutResponse],
+            value: nil,
+            permissions: [.writeable]
+        )
+
+        let path = CBMutableCharacteristic(
+            type: CBUUID(string: VisorService.pathCharacteristic),
             properties: [.writeWithoutResponse],
             value: nil,
             permissions: [.writeable]
         )
 
         let service = CBMutableService(type: CBUUID(string: VisorService.uuid), primary: true)
-        service.characteristics = [characteristic]
+        service.characteristics = [characteristic, path]
 
         peripheral.removeAllServices()
         peripheral.add(service)
@@ -121,9 +144,15 @@ final class PeripheralServer: NSObject, CBPeripheralManagerDelegate {
     func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveWrite requests: [CBATTRequest]) {
         // No `respond(to:)` here on purpose: these are writes without response,
         // and answering one is an error rather than a courtesy.
+        let pathID = CBUUID(string: VisorService.pathCharacteristic)
+
         for request in requests {
             guard let data = request.value else { continue }
-            accept(data)
+            if request.characteristic.uuid == pathID {
+                acceptPath(data)
+            } else {
+                accept(data)
+            }
         }
     }
 }

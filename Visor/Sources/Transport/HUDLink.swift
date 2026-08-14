@@ -38,22 +38,25 @@ public final class HUDLink: NSObject {
 
     public private(set) var state: State = .starting
     public private(set) var packetsSent = 0
-    /// Packets thrown away because the radio was not ready for them.
+    public private(set) var pathsSent = 0
+    /// Writes thrown away because the radio was not ready for them.
     ///
     /// Not a failure to hide: at one packet a second, a queue would only ever
     /// deliver stale instructions late. Better to drop one and send fresher
     /// numbers a second later, and to be able to see how often that happens.
-    public private(set) var packetsDropped = 0
+    public private(set) var writesDropped = 0
     public private(set) var lastPacketSize = 0
 
     @ObservationIgnored private var central: CBCentralManager?
     @ObservationIgnored private var display: CBPeripheral?
     @ObservationIgnored private var characteristic: CBCharacteristic?
+    @ObservationIgnored private var pathCharacteristic: CBCharacteristic?
 
     // Instance properties rather than statics: CBUUID is not Sendable, and a
     // shared global of one would be a data race waiting to be noticed.
     @ObservationIgnored private let serviceID = CBUUID(string: VisorService.uuid)
     @ObservationIgnored private let characteristicID = CBUUID(string: VisorService.packetCharacteristic)
+    @ObservationIgnored private let pathCharacteristicID = CBUUID(string: VisorService.pathCharacteristic)
 
     public override init() {
         super.init()
@@ -82,7 +85,22 @@ public final class HUDLink: NSObject {
         }
         display = nil
         characteristic = nil
+        pathCharacteristic = nil
         state = central == nil ? .starting : .searching
+    }
+
+    /// How many path points this link has room for in one write.
+    ///
+    /// Zero when there is nothing to write to, which is also the answer for a
+    /// display that has no path characteristic: a device that only shows words
+    /// should not have a map built for it.
+    ///
+    /// No ceiling beyond what the link gives. A straight road simplifies down
+    /// to a handful of points however large the budget, so a generous MTU costs
+    /// nothing on ordinary roads and buys real shape on twisty ones.
+    public var pathPointBudget: Int {
+        guard let display, pathCharacteristic != nil, state == .connected else { return 0 }
+        return PathPacket.points(fitting: display.maximumWriteValueLength(for: .withoutResponse))
     }
 
     /// Writes one packet, if there is anywhere to write it.
@@ -94,7 +112,7 @@ public final class HUDLink: NSObject {
         guard let display, let characteristic, state == .connected else { return }
 
         guard display.canSendWriteWithoutResponse else {
-            packetsDropped += 1
+            writesDropped += 1
             return
         }
 
@@ -104,6 +122,24 @@ public final class HUDLink: NSObject {
 
         packetsSent += 1
         lastPacketSize = data.count
+    }
+
+    /// Writes the shape of the road, if the display asked for one.
+    ///
+    /// Send this *after* the guidance packet, never before. When the radio can
+    /// only take one write, the one it takes has to be the turn: a rider can
+    /// ride without the map and cannot ride without the instruction.
+    public func send(_ path: PathPacket) {
+        guard let display, let pathCharacteristic, state == .connected else { return }
+
+        guard display.canSendWriteWithoutResponse else {
+            writesDropped += 1
+            return
+        }
+
+        let limit = display.maximumWriteValueLength(for: .withoutResponse)
+        display.writeValue(path.encoded(maximumSize: limit), for: pathCharacteristic, type: .withoutResponse)
+        pathsSent += 1
     }
 }
 
@@ -179,6 +215,7 @@ extension HUDLink: CBCentralManagerDelegate {
         error: Error?
     ) {
         characteristic = nil
+        pathCharacteristic = nil
         beginScanning(with: central)
     }
 
@@ -188,6 +225,7 @@ extension HUDLink: CBCentralManagerDelegate {
         error: Error?
     ) {
         characteristic = nil
+        pathCharacteristic = nil
         state = .connecting
         // Left pending on purpose: this is the request that reconnects by
         // itself when the display comes back.
@@ -202,7 +240,7 @@ extension HUDLink: CBPeripheralDelegate {
         guard let service = peripheral.services?.first(where: { $0.uuid == serviceID }) else {
             return
         }
-        peripheral.discoverCharacteristics([characteristicID], for: service)
+        peripheral.discoverCharacteristics([characteristicID, pathCharacteristicID], for: service)
     }
 
     public func peripheral(
@@ -210,6 +248,11 @@ extension HUDLink: CBPeripheralDelegate {
         didDiscoverCharacteristicsFor service: CBService,
         error: Error?
     ) {
+        // The path is optional and the instruction is not. A display that
+        // offers only the second is a display this app can still guide with,
+        // so the link counts as up once that one is found.
+        pathCharacteristic = service.characteristics?.first { $0.uuid == pathCharacteristicID }
+
         guard let match = service.characteristics?.first(where: { $0.uuid == characteristicID }) else {
             return
         }

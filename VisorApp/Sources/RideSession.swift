@@ -150,6 +150,7 @@ final class RideSession {
         // whether or not a fix arrived, because a display that hears nothing
         // cannot tell a quiet phone from a dead one.
         link.send(HUDPacket(state))
+        sendPath()
 
         if engine.shouldRequestReroute(at: now) {
             requestReroute(at: now)
@@ -158,6 +159,20 @@ final class RideSession {
         if let replay = locations as? ReplaySource, replay.hasFinished {
             stop()
         }
+    }
+
+    /// Sends the shape of the road ahead, when the display has room for one.
+    ///
+    /// Built to the link's own budget rather than to a fixed size: how much
+    /// geometry fits is a property of this connection, and asking first is
+    /// cheaper than building a path only to cut it down afterwards.
+    private func sendPath() {
+        guard let progress = state.progress else { return }
+
+        let budget = link.pathPointBudget
+        guard budget > 1 else { return }
+
+        link.send(PathPacket(engine.index.path(at: progress, points: budget)))
     }
 
     /// Asks for a replacement route from where the rider actually is.
