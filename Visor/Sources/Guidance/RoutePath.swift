@@ -59,8 +59,7 @@ extension RouteIndex {
     /// eighty the same wander is two, and it takes several seconds to get
     /// there rather than arriving between one packet and the next.
     ///
-    /// The price is that the frame begins turning into a bend before the bend,
-    /// which reads as a camera leading the rider rather than chasing them.
+    /// Spread either side of the rider, so it is forty metres each way.
     static let headingWindow = 80.0
 
     /// Which way the road runs at a point along the route, in compass degrees.
@@ -73,7 +72,19 @@ extension RouteIndex {
         let samples = 9
         let half = samples / 2
 
-        let from = min(max(0, travelled), max(0, length - Self.headingWindow))
+        // Centred on the rider rather than reaching out in front of them.
+        // Looking only forward means that a whole window before a corner the
+        // frame is already round it, and the map comes about while the rider is
+        // still going straight; from behind the glass that is
+        // indistinguishable from having turned early. Spread either side, the
+        // turn lands on the corner: halfway round as the rider reaches it, and
+        // finished as they leave.
+        //
+        // It costs nothing on a curve. A window centred on a constant bend
+        // averages to the direction at its middle, so unlike a forward window
+        // it neither leads nor lags.
+        let window = Self.headingWindow
+        let from = min(max(0, travelled - window / 2), max(0, length - window))
         guard let origin = Geo.coordinate(on: route.polyline, at: from) else { return 0 }
 
         // Degrees of longitude are shorter than degrees of latitude everywhere
@@ -84,7 +95,7 @@ extension RouteIndex {
         var far = (east: 0.0, north: 0.0)
 
         for step in 0..<samples {
-            let along = from + Self.headingWindow * Double(step) / Double(samples - 1)
+            let along = from + window * Double(step) / Double(samples - 1)
             guard let point = Geo.coordinate(on: route.polyline, at: along) else { continue }
 
             let east = (point.longitude - origin.longitude) * scale

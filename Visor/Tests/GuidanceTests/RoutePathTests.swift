@@ -45,10 +45,30 @@ final class RouteHeadingTests: XCTestCase {
     }
 
     func testTheHeadingAtTheDestinationIsTheRoadArrivedOn() throws {
-        // Nothing left to look ahead at, so it reads the last 20 m instead of
-        // collapsing to a meaningless zero.
+        // Nothing left in front to centre the window on, so it slides back onto
+        // the last stretch of road instead of collapsing to a meaningless zero.
         let index = RouteIndex(cornerRoute())
         XCTAssertEqual(Geo.bearingDelta(from: index.heading(at: 600), to: 90), 0, accuracy: 0.5)
+    }
+
+    /// The frame must turn with the rider, not ahead of them.
+    ///
+    /// A window that only looks forward is already round the corner a whole
+    /// window before the rider is, so the map comes about while they are still
+    /// going straight. From behind the glass that is indistinguishable from
+    /// having turned early. Centred on the rider, the turn lands where it
+    /// belongs: halfway round as they reach the corner, finished as they leave.
+    func testTheFrameTurnsWithTheRiderNotBeforeThem() {
+        // North to 300 m, then right onto an east road.
+        let index = RouteIndex(cornerRoute())
+
+        XCTAssertEqual(Geo.bearingDelta(from: index.heading(at: 200), to: 0), 0, accuracy: 0.5)
+        // Thirty-five metres out, and it has barely begun to move.
+        XCTAssertLessThan(index.heading(at: 265), 2)
+        // At the corner, halfway through the ninety degrees.
+        XCTAssertEqual(index.heading(at: 300), 45, accuracy: 3)
+        // And done shortly after it, not long before.
+        XCTAssertEqual(index.heading(at: 340), 90, accuracy: 0.5)
     }
 
     /// The reason the frame is not read off a short chord.
