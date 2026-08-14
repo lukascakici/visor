@@ -75,12 +75,22 @@ extension RouteIndex {
     /// sense of which way the rider came from, and a short tail restores it
     /// without spending bytes on road nobody is going to ride again.
     ///
+    /// `ahead` is deliberately further than any display will draw. A road that
+    /// stops inside the panel reads as a road that ends, or worse as a turn,
+    /// and a rider cannot tell that from a road the packet simply ran out of.
+    /// Sent long, the line always leaves the edge of the screen, and stopping
+    /// short then means what it should: the destination is that close.
+    ///
+    /// It costs almost nothing. Detail below a meter is dropped before the
+    /// budget is counted, so an extra half kilometre of ordinary road is a
+    /// handful of points.
+    ///
     /// `points` is the whole budget, junction marker included: whatever comes
     /// back fits in it.
     public func path(
         at progress: RouteProgress,
         behind: Double = 100,
-        ahead: Double = 500,
+        ahead: Double = 1000,
         points limit: Int = 40
     ) -> RoutePath {
         guard limit > 1, route.polyline.count > 1 else { return .empty }

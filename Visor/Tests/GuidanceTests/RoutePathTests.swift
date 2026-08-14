@@ -174,6 +174,25 @@ final class RoutePathTests: XCTestCase {
         XCTAssertEqual(path.points.count, 2)
     }
 
+    // MARK: - Reach
+
+    func testThePathReachesFurtherThanAnyDisplayDraws() throws {
+        // Two kilometres of straight road, ridden from 500 m in.
+        let polyline = (0...200).map { Geo.destination(from: start, bearing: 0, distance: Double($0) * 10) }
+        let index = RouteIndex(Route(steps: [
+            RouteStep(polyline: polyline, distance: 2000, expectedTravelTime: 120, streetName: "Destination"),
+        ]))
+        let path = index.path(at: try progress(index, at: 500))
+
+        // The display draws 450 m of this. Sending less than it draws is what
+        // makes a road stop inside the panel, and a road that stops on screen
+        // reads as a turn or an ending rather than as one that carries on.
+        XCTAssertGreaterThan(try XCTUnwrap(path.points.map(\.ahead).max()), 900)
+
+        // And it costs two points, because a straight kilometre is two points.
+        XCTAssertEqual(path.points.count, 2)
+    }
+
     // MARK: - Edges
 
     func testThePathStopsAtTheDestination() throws {

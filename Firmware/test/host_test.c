@@ -179,7 +179,9 @@ static void test_view(void)
 
     visor_frame_t frame = visor_frame_make(240, 240);
     check_near(visor_frame_x(&frame, 0.0f), 120.0f, 0.01f, "the rider is centred");
-    check_near(visor_frame_y(&frame, 0.0f), 200.0f, 0.01f, "and sits low, with the road ahead of them");
+    float depth = VISOR_VIEW_AHEAD_M + VISOR_VIEW_BEHIND_M;
+    check_near(visor_frame_y(&frame, 0.0f), 240.0f * VISOR_VIEW_AHEAD_M / depth, 0.01f,
+               "and sits low, with the road ahead of them");
     check(visor_frame_y(&frame, 100.0f) < visor_frame_y(&frame, 0.0f), "ahead is up the panel");
     check(visor_frame_x(&frame, 10.0f) > visor_frame_x(&frame, 0.0f), "right is to the right");
 }
@@ -452,7 +454,8 @@ static void test_the_rider_stays_visible_on_the_road(void)
      * wider than it is. */
     int road_top = HEIGHT * 42 / 100;
     int road_height = HEIGHT * 44 / 100;
-    int row = road_top + road_height * 300 / 360 - HEIGHT / 40;
+    float share = VISOR_VIEW_AHEAD_M / (VISOR_VIEW_AHEAD_M + VISOR_VIEW_BEHIND_M);
+    int row = road_top + (int)((float)road_height * share) - HEIGHT / 40;
     int centre = WIDTH / 2;
 
     check(is_content(pixels[row * WIDTH + centre]), "the rider is drawn");

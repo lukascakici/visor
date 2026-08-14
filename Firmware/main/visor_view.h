@@ -21,8 +21,13 @@
  * Sizing the drawing to whatever happened to arrive means every packet that
  * reaches a little further redraws the world at a new scale, which reads as
  * violent motion where there was none.
+ *
+ * Less than the phone sends, and that is the point. The line then runs off the
+ * top of the panel while there is still route beyond it, so it only ever stops
+ * on screen when the destination really is that close. Draw as much as arrives
+ * and every packet ends in what looks like a turn.
  */
-#define VISOR_VIEW_AHEAD_M 300.0f
+#define VISOR_VIEW_AHEAD_M 450.0f
 #define VISOR_VIEW_BEHIND_M 60.0f
 
 /* Points the road is redrawn with. Both packets are resampled to this many so

@@ -27,7 +27,7 @@ struct PathView: View {
     let isOffRoute: Bool
 
     /// How much road the panel holds. Fixed, so the scale never moves.
-    private let metersAhead = 300.0
+    private let metersAhead = 450.0
     private let metersBehind = 60.0
 
     /// Points to redraw the road with. Both packets are resampled to the same

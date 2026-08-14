@@ -10,7 +10,7 @@ import Guidance
 enum PathMap {
     /// Matches the display's own window, so what shows here is what would show
     /// there rather than a differently framed picture of the same numbers.
-    static let ahead = 300.0
+    static let ahead = 450.0
     static let behind = 60.0
 
     static func render(_ path: RoutePath, width: Int = 52, height: Int = 13) -> [String] {
