@@ -31,6 +31,11 @@ public struct RoutePath: Hashable, Sendable {
     /// saying where the turn is, leaves the rider to guess which bend is theirs.
     public let maneuverIndex: Int?
 
+    public init(points: [Point], maneuverIndex: Int?) {
+        self.points = points
+        self.maneuverIndex = maneuverIndex
+    }
+
     public static let empty = RoutePath(points: [], maneuverIndex: nil)
 }
 

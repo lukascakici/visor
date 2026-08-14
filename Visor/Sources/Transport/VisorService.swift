@@ -14,6 +14,14 @@ public enum VisorService {
     /// the next one is already due, and it carries fresher numbers.
     public static let packetCharacteristic = "A1B2C3D4-0002-4A6F-9B1E-5F3C2D7E8A90"
 
+    /// The characteristic the shape of the road is written to.
+    ///
+    /// Its own characteristic rather than a second kind of message on the one
+    /// above, so a device that only has room for words can ignore it and still
+    /// be guided, and so the map can be dropped under load while the
+    /// instruction never is. One is a picture, the other is the turn.
+    public static let pathCharacteristic = "A1B2C3D4-0003-4A6F-9B1E-5F3C2D7E8A90"
+
     /// The name the HUD advertises itself under.
     public static let advertisedName = "Visor HUD"
 }
