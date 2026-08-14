@@ -8,3 +8,5 @@ xcuserdata/
 VisorApp/NOTES.md
 VisorSim/NOTES.md
 build/
+Firmware/test/host_test
+Firmware/test/*.ppm
