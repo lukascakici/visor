@@ -51,6 +51,59 @@ final class RouteHeadingTests: XCTestCase {
         XCTAssertEqual(Geo.bearingDelta(from: index.heading(at: 600), to: 90), 0, accuracy: 0.5)
     }
 
+    /// The reason the frame is not read off a short chord.
+    ///
+    /// A road that wanders a couple of metres either side of straight, which is
+    /// what ordinary route geometry looks like. Read over twenty metres this
+    /// wander is worth eight degrees and the map shakes; the frame has to sit
+    /// still through it.
+    func testAWanderingRoadDoesNotSwingTheFrame() {
+        let wobbly = (0...60).map { index -> Coordinate in
+            let along = Geo.destination(from: start, bearing: 0, distance: Double(index) * 10)
+            let sway = sin(Double(index) * 0.9) * 2.5
+            return Geo.destination(from: along, bearing: 90, distance: sway)
+        }
+        let index = RouteIndex(Route(steps: [
+            RouteStep(polyline: wobbly, distance: 600, expectedTravelTime: 60, streetName: "Destination"),
+        ]))
+
+        /// What reading the frame off a short chord used to give, for comparison.
+        func chord(at travelled: Double) -> Double {
+            let from = min(max(0, travelled), max(0, index.length - 20))
+            guard
+                let start = Geo.coordinate(on: index.route.polyline, at: from),
+                let end = Geo.coordinate(on: index.route.polyline, at: from + 20)
+            else { return 0 }
+            return Geo.initialBearing(from: start, to: end)
+        }
+
+        var worstSwing = 0.0
+        var worstChordSwing = 0.0
+        var furthestOff = 0.0
+
+        var previous = index.heading(at: 0)
+        var previousChord = chord(at: 0)
+
+        for metre in stride(from: 5.0, through: 400.0, by: 5) {
+            let heading = index.heading(at: metre)
+            let naive = chord(at: metre)
+
+            worstSwing = max(worstSwing, abs(Geo.bearingDelta(from: previous, to: heading)))
+            worstChordSwing = max(worstChordSwing, abs(Geo.bearingDelta(from: previousChord, to: naive)))
+            furthestOff = max(furthestOff, abs(Geo.bearingDelta(from: heading, to: 0)))
+
+            previous = heading
+            previousChord = naive
+        }
+
+        // Measured against what it replaces rather than against a number picked
+        // out of the air: the frame has to be several times steadier than a
+        // short chord, or there was no point widening it.
+        XCTAssertLessThan(worstSwing * 3, worstChordSwing)
+        // And still pointing down the road it is on.
+        XCTAssertLessThan(furthestOff, 4.0)
+    }
+
     func testARouteWithNoGeometryHasNoHeading() {
         let index = RouteIndex(Route(steps: [
             RouteStep(polyline: [start], distance: 0, expectedTravelTime: 0),

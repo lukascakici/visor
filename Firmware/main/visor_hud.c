@@ -151,7 +151,7 @@ static void render_road(const visor_canvas_t *canvas,
 
     visor_frame_t frame = visor_frame_make(canvas->width, canvas->height);
     uint16_t colour = road_colour(state);
-    float thickness = (float)canvas->width * 0.036f;
+    float thickness = (float)canvas->width * 0.030f;
 
     visor_pt_t road[VISOR_VIEW_SAMPLES];
     int here = 0;

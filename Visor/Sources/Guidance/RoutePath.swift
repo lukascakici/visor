@@ -50,23 +50,60 @@ extension RouteIndex {
     /// the rider to.
     static let detailFloor = 1.0
 
+    /// How far ahead the frame reads the road to decide which way is up.
+    ///
+    /// This one number decides how steady the picture is. A road wanders by a
+    /// meter or two as a matter of course, and over a short baseline that is
+    /// degrees: three meters across twenty is eight degrees, and eight degrees
+    /// swings the far end of the drawn road clear across the panel. Across
+    /// eighty the same wander is two, and it takes several seconds to get
+    /// there rather than arriving between one packet and the next.
+    ///
+    /// The price is that the frame begins turning into a bend before the bend,
+    /// which reads as a camera leading the rider rather than chasing them.
+    static let headingWindow = 80.0
+
     /// Which way the road runs at a point along the route, in compass degrees.
     ///
-    /// Measured over the next 20 m rather than off the segment underfoot. Route
-    /// geometry ends steps with tails a meter or two long, and reading the
-    /// direction off one of those would swing the whole picture around for a
-    /// second at every junction.
+    /// Not the chord from here to there. A chord is decided entirely by its two
+    /// ends, so a meter of wander at either one turns the whole map. This takes
+    /// the direction from the near half of the window to the far half, which
+    /// averages the wander out instead of being steered by it.
     public func heading(at travelled: Double) -> Double {
-        let lookahead = 20.0
-        let from = min(max(0, travelled), max(0, length - lookahead))
+        let samples = 9
+        let half = samples / 2
 
-        guard
-            let start = Geo.coordinate(on: route.polyline, at: from),
-            let end = Geo.coordinate(on: route.polyline, at: from + lookahead),
-            start != end
-        else { return 0 }
+        let from = min(max(0, travelled), max(0, length - Self.headingWindow))
+        guard let origin = Geo.coordinate(on: route.polyline, at: from) else { return 0 }
 
-        return Geo.initialBearing(from: start, to: end)
+        // Degrees of longitude are shorter than degrees of latitude everywhere
+        // but the equator, and a direction taken without correcting for that is
+        // wrong by the same amount everywhere in Istanbul.
+        let scale = cos(origin.latitude * .pi / 180)
+        var near = (east: 0.0, north: 0.0)
+        var far = (east: 0.0, north: 0.0)
+
+        for step in 0..<samples {
+            let along = from + Self.headingWindow * Double(step) / Double(samples - 1)
+            guard let point = Geo.coordinate(on: route.polyline, at: along) else { continue }
+
+            let east = (point.longitude - origin.longitude) * scale
+            let north = point.latitude - origin.latitude
+
+            if step < half {
+                near.east += east
+                near.north += north
+            } else if step >= samples - half {
+                far.east += east
+                far.north += north
+            }
+        }
+
+        let east = (far.east - near.east) / Double(half)
+        let north = (far.north - near.north) / Double(half)
+        guard east * east + north * north > 0 else { return 0 }
+
+        return Geo.normalizedBearing(atan2(east, north) * 180 / .pi)
     }
 
     /// The stretch of road around the rider, in the rider's own frame.
