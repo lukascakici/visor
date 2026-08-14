@@ -8,23 +8,40 @@
 
 /* Begin PBXBuildFile section */
 		13B48EE219ED2305EB74A42D /* Simulation in Frameworks */ = {isa = PBXBuildFile; productRef = CA6DBEC5FF655658202AF13A /* Simulation */; };
+		2BF141397C7077241CA3F138 /* DeviceScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = D512AC4F05F432DA4D7BBC87 /* DeviceScreen.swift */; };
 		313D293FEF4E7D91E5C4515F /* Transport in Frameworks */ = {isa = PBXBuildFile; productRef = 7446DEEF033BCB0F0FC75D9B /* Transport */; };
 		3F27B8F6E3AC126C8E86D0F2 /* Guidance in Frameworks */ = {isa = PBXBuildFile; productRef = 5D13A426AB446413BDE090A7 /* Guidance */; };
+		427B6DAF9B313B74F499F81F /* visor_draw.c in Sources */ = {isa = PBXBuildFile; fileRef = BF2A03CBE9156366D2891DCB /* visor_draw.c */; };
 		54D6906AE9AA1751F8DD1C87 /* DemoFeed.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946C703D2B7F7CFDB948F57A /* DemoFeed.swift */; };
+		59D3BC0F28621CF8A834B518 /* visor_hud.c in Sources */ = {isa = PBXBuildFile; fileRef = 4E1D56E41C6CBDE335FF9666 /* visor_hud.c */; };
 		5C775F6D3B62994A9B9D22DC /* PeripheralServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DC9BFC2CA4783EE6947E860 /* PeripheralServer.swift */; };
+		62DFD6F572B6D0BD2F4A3A5E /* DevicePanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 452F44892BA3F81680954A0E /* DevicePanel.swift */; };
 		6B16DA00C0BE6FC119B61FCC /* HUDView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7B85E66DF5D7D88F78AE669 /* HUDView.swift */; };
 		708AFA1672E3189BA374B885 /* PathView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E753E3F87E5D03327436F15 /* PathView.swift */; };
+		9ECC9C9F87E9C8540E31B435 /* visor_packet.c in Sources */ = {isa = PBXBuildFile; fileRef = 898FB181E285967E72CD791D /* visor_packet.c */; };
 		C9232C68912DE7D3F0BF32DC /* VisorSimApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A90C7BDC71A264D5DACAD9 /* VisorSimApp.swift */; };
 		E869826C0BF12E1D9D90E6F3 /* Core in Frameworks */ = {isa = PBXBuildFile; productRef = F63860A0D8675C4CF558354C /* Core */; };
+		FCB0A0B58C0500D74F38ADF1 /* visor_view.c in Sources */ = {isa = PBXBuildFile; fileRef = 77BFD4BEFC710348C76D842A /* visor_view.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		14B66EDDCD7B6A3B2C90374A /* visor_packet.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = visor_packet.h; sourceTree = "<group>"; };
+		2970E702DCB1A019D53DA994 /* visor_draw.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = visor_draw.h; sourceTree = "<group>"; };
 		31C22B42A5A4DA6784E61405 /* Visor */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Visor; path = ../Visor; sourceTree = SOURCE_ROOT; };
+		3CFD45E478F0D56270E3D67E /* visor_hud.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = visor_hud.h; sourceTree = "<group>"; };
+		452F44892BA3F81680954A0E /* DevicePanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevicePanel.swift; sourceTree = "<group>"; };
+		4E1D56E41C6CBDE335FF9666 /* visor_hud.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = visor_hud.c; sourceTree = "<group>"; };
 		6DC9BFC2CA4783EE6947E860 /* PeripheralServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeripheralServer.swift; sourceTree = "<group>"; };
 		6E753E3F87E5D03327436F15 /* PathView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathView.swift; sourceTree = "<group>"; };
+		77BFD4BEFC710348C76D842A /* visor_view.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = visor_view.c; sourceTree = "<group>"; };
+		898FB181E285967E72CD791D /* visor_packet.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = visor_packet.c; sourceTree = "<group>"; };
 		946C703D2B7F7CFDB948F57A /* DemoFeed.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoFeed.swift; sourceTree = "<group>"; };
+		AF6BE4C1760418069FA45D10 /* VisorSim-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "VisorSim-Bridging-Header.h"; sourceTree = "<group>"; };
 		BCB4B6DD4277D87B07D327CB /* VisorSim.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VisorSim.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BF2A03CBE9156366D2891DCB /* visor_draw.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = visor_draw.c; sourceTree = "<group>"; };
 		D1A90C7BDC71A264D5DACAD9 /* VisorSimApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisorSimApp.swift; sourceTree = "<group>"; };
+		D512AC4F05F432DA4D7BBC87 /* DeviceScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceScreen.swift; sourceTree = "<group>"; };
+		E548BF1A221757B2224D47D8 /* visor_view.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = visor_view.h; sourceTree = "<group>"; };
 		E7B85E66DF5D7D88F78AE669 /* HUDView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HUDView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -43,12 +60,36 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		2F5478C884A6F8FACAFAB031 /* visor */ = {
+			isa = PBXGroup;
+			children = (
+				E6305BCA60CC512CECE9B543 /* Firmware */,
+			);
+			name = visor;
+			path = ..;
+			sourceTree = "<group>";
+		};
 		8353B3ACA786E8EE3E5DB888 /* Packages */ = {
 			isa = PBXGroup;
 			children = (
 				31C22B42A5A4DA6784E61405 /* Visor */,
 			);
 			name = Packages;
+			sourceTree = "<group>";
+		};
+		9245B7AFD714E2A72760FEC9 /* main */ = {
+			isa = PBXGroup;
+			children = (
+				BF2A03CBE9156366D2891DCB /* visor_draw.c */,
+				2970E702DCB1A019D53DA994 /* visor_draw.h */,
+				4E1D56E41C6CBDE335FF9666 /* visor_hud.c */,
+				3CFD45E478F0D56270E3D67E /* visor_hud.h */,
+				898FB181E285967E72CD791D /* visor_packet.c */,
+				14B66EDDCD7B6A3B2C90374A /* visor_packet.h */,
+				77BFD4BEFC710348C76D842A /* visor_view.c */,
+				E548BF1A221757B2224D47D8 /* visor_view.h */,
+			);
+			path = main;
 			sourceTree = "<group>";
 		};
 		ADEC1CB3DAEFF2681CF8D148 /* Products */ = {
@@ -64,6 +105,7 @@
 			children = (
 				8353B3ACA786E8EE3E5DB888 /* Packages */,
 				E3DFBC216E1D3AF34D8AC558 /* Sources */,
+				2F5478C884A6F8FACAFAB031 /* visor */,
 				ADEC1CB3DAEFF2681CF8D148 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -72,12 +114,23 @@
 			isa = PBXGroup;
 			children = (
 				946C703D2B7F7CFDB948F57A /* DemoFeed.swift */,
+				452F44892BA3F81680954A0E /* DevicePanel.swift */,
+				D512AC4F05F432DA4D7BBC87 /* DeviceScreen.swift */,
 				E7B85E66DF5D7D88F78AE669 /* HUDView.swift */,
 				6E753E3F87E5D03327436F15 /* PathView.swift */,
 				6DC9BFC2CA4783EE6947E860 /* PeripheralServer.swift */,
+				AF6BE4C1760418069FA45D10 /* VisorSim-Bridging-Header.h */,
 				D1A90C7BDC71A264D5DACAD9 /* VisorSimApp.swift */,
 			);
 			path = Sources;
+			sourceTree = "<group>";
+		};
+		E6305BCA60CC512CECE9B543 /* Firmware */ = {
+			isa = PBXGroup;
+			children = (
+				9245B7AFD714E2A72760FEC9 /* main */,
+			);
+			path = Firmware;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -147,10 +200,16 @@
 			buildActionMask = 2147483647;
 			files = (
 				54D6906AE9AA1751F8DD1C87 /* DemoFeed.swift in Sources */,
+				62DFD6F572B6D0BD2F4A3A5E /* DevicePanel.swift in Sources */,
+				2BF141397C7077241CA3F138 /* DeviceScreen.swift in Sources */,
 				6B16DA00C0BE6FC119B61FCC /* HUDView.swift in Sources */,
 				708AFA1672E3189BA374B885 /* PathView.swift in Sources */,
 				5C775F6D3B62994A9B9D22DC /* PeripheralServer.swift in Sources */,
 				C9232C68912DE7D3F0BF32DC /* VisorSimApp.swift in Sources */,
+				427B6DAF9B313B74F499F81F /* visor_draw.c in Sources */,
+				59D3BC0F28621CF8A834B518 /* visor_hud.c in Sources */,
+				9ECC9C9F87E9C8540E31B435 /* visor_packet.c in Sources */,
+				FCB0A0B58C0500D74F38ADF1 /* visor_view.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -167,6 +226,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_HARDENED_RUNTIME = NO;
 				GENERATE_INFOPLIST_FILE = NO;
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/../Firmware/main";
 				INFOPLIST_FILE = Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -175,6 +235,7 @@
 				MARKETING_VERSION = 0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.visor.sim;
 				SDKROOT = macosx;
+				SWIFT_OBJC_BRIDGING_HEADER = "Sources/VisorSim-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
@@ -245,6 +306,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_HARDENED_RUNTIME = NO;
 				GENERATE_INFOPLIST_FILE = NO;
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/../Firmware/main";
 				INFOPLIST_FILE = Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -253,6 +315,7 @@
 				MARKETING_VERSION = 0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.visor.sim;
 				SDKROOT = macosx;
+				SWIFT_OBJC_BRIDGING_HEADER = "Sources/VisorSim-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;

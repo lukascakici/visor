@@ -18,6 +18,15 @@ targets:
     scheme: {}
     sources:
       - path: Sources
+      # The firmware's own rendering, built into the simulator so the preview
+      # shows the device's pixels rather than an impression of them. The two
+      # platform files are left out: they are NimBLE and a panel driver, and
+      # neither exists on a Mac.
+      - path: ../Firmware/main
+        excludes:
+          - "visor_ble.c"
+          - "visor_panel.c"
+          - "main.c"
     dependencies:
       - package: Visor
         product: Core
@@ -40,6 +49,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.visor.sim
+        SWIFT_OBJC_BRIDGING_HEADER: Sources/VisorSim-Bridging-Header.h
+        HEADER_SEARCH_PATHS: $(SRCROOT)/../Firmware/main
         MARKETING_VERSION: "0.1"
         CURRENT_PROJECT_VERSION: 1
         SWIFT_VERSION: "5.0"

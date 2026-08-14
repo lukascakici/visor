@@ -42,9 +42,23 @@ void visor_hud_receive_path(visor_hud_state_t *state,
                             size_t length,
                             int64_t now_us);
 
+/* What shape the glass is.
+ *
+ * The framebuffer is a rectangle either way; on a round panel the corners are
+ * simply not there. Which makes this a layout question rather than a drawing
+ * one: nothing needs masking, but nothing may be put where there is no glass.
+ */
+typedef enum {
+    VISOR_PANEL_SQUARE,
+    VISOR_PANEL_ROUND,
+} visor_panel_shape_t;
+
 /* Draws the whole screen. Call as often as the panel can take it: the road is
  * crossed between packets, so the more often this runs the smoother it moves.
  */
-void visor_hud_render(const visor_canvas_t *canvas, const visor_hud_state_t *state, int64_t now_us);
+void visor_hud_render(const visor_canvas_t *canvas,
+                      const visor_hud_state_t *state,
+                      int64_t now_us,
+                      visor_panel_shape_t shape);
 
 #endif /* VISOR_HUD_H */

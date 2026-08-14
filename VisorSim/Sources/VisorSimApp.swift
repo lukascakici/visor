@@ -16,17 +16,61 @@ struct VisorSimApp: App {
 /// The whole simulator: what the HUD would show on top, the bytes that produced
 /// it underneath.
 struct SimulatorView: View {
+    /// What is being looked at: the device's own pixels, or the same packets
+    /// spelled out. The first answers "what will a rider see", the second
+    /// answers "did the right bytes arrive", and neither substitutes for the
+    /// other.
     @State private var server = PeripheralServer()
     @State private var feed = DemoFeed()
+    @State private var glass = DeviceGlass.all[0]
+    @State private var showReadout = false
+    @State private var screen = DeviceScreen(size: DeviceGlass.all[0].pixels)
 
     var body: some View {
         VStack(spacing: 16) {
             header
-            HUDView(received: server.latest, path: server.path)
+
+            Picker("", selection: Binding(
+                get: { showReadout ? nil : glass },
+                set: { choice in
+                    showReadout = choice == nil
+                    if let choice { glass = choice }
+                }
+            )) {
+                ForEach(DeviceGlass.all) { Text($0.label).tag(Optional($0)) }
+                Text("Readout").tag(DeviceGlass?.none)
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+
+            if showReadout {
+                HUDView(received: server.latest, path: server.path)
+            } else {
+                DevicePanel(screen: screen, glass: glass)
+            }
+
             log
         }
         .padding(16)
         .onAppear { server.start() }
+        // A different panel is a different framebuffer, so it is a different
+        // screen. Handing it the packets already in hand saves it a second of
+        // looking blank for no reason.
+        .onChange(of: glass) {
+            let fresh = DeviceScreen(size: glass.pixels)
+            if let data = server.latest?.data { fresh.receiveGuidance(data) }
+            if let data = server.path.data { fresh.receivePath(data) }
+            screen = fresh
+        }
+        // Fed the bytes as they land, not the decoded packets: the firmware
+        // does its own decoding, and letting it is the only way the preview
+        // proves anything.
+        .onChange(of: server.packetCount) {
+            if let data = server.latest?.data { screen.receiveGuidance(data) }
+        }
+        .onChange(of: server.pathCount) {
+            if let data = server.path.data { screen.receivePath(data) }
+        }
     }
 
     private var header: some View {

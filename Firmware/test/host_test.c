@@ -238,7 +238,10 @@ static void test_a_new_junction_does_not_slide(void)
 
 static uint16_t pixels[WIDTH * HEIGHT];
 
-static void write_image(const char *name)
+/* Writes what the panel would show. On round glass the corners are not dark,
+ * they are absent, so masking them out here is the only way to see what a rider
+ * would actually see. */
+static void write_image(const char *name, bool round)
 {
     FILE *file = fopen(name, "wb");
     if (file == NULL) {
@@ -248,6 +251,13 @@ static void write_image(const char *name)
     fprintf(file, "P6\n%d %d\n255\n", WIDTH, HEIGHT);
     for (int index = 0; index < WIDTH * HEIGHT; index++) {
         uint16_t pixel = pixels[index];
+        if (round) {
+            float dx = (float)(index % WIDTH) - WIDTH / 2.0f;
+            float dy = (float)(index / WIDTH) - HEIGHT / 2.0f;
+            if (dx * dx + dy * dy > (WIDTH / 2.0f) * (WIDTH / 2.0f)) {
+                pixel = visor_rgb(26, 26, 30);
+            }
+        }
         unsigned char rgb[3] = {
             (unsigned char)(((pixel >> 11) & 0x1F) * 255 / 31),
             (unsigned char)(((pixel >> 5) & 0x3F) * 255 / 63),
@@ -269,6 +279,25 @@ static int lit_pixels(void)
     return lit;
 }
 
+/* Anything lit outside the glass is something a rider will never see. */
+static int lit_off_the_glass(void)
+{
+    int lost = 0;
+    float radius = WIDTH / 2.0f;
+
+    for (int index = 0; index < WIDTH * HEIGHT; index++) {
+        if (pixels[index] == 0) {
+            continue;
+        }
+        float dx = (float)(index % WIDTH) - radius;
+        float dy = (float)(index / WIDTH) - radius;
+        if (dx * dx + dy * dy > radius * radius) {
+            lost++;
+        }
+    }
+    return lost;
+}
+
 static void test_screen(void)
 {
     printf("the screen\n");
@@ -277,16 +306,16 @@ static void test_screen(void)
     visor_hud_state_t state;
     visor_hud_reset(&state);
 
-    visor_hud_render(&canvas, &state, 0);
+    visor_hud_render(&canvas, &state, 0, VISOR_PANEL_ROUND);
     check(lit_pixels() > 0, "with no packets there is still something on screen");
     int quiet = lit_pixels();
 
     visor_hud_receive_guidance(&state, GUIDANCE, sizeof(GUIDANCE));
     visor_hud_receive_path(&state, PATH, sizeof(PATH), 1000000);
-    visor_hud_render(&canvas, &state, 1000000);
+    visor_hud_render(&canvas, &state, 1000000, VISOR_PANEL_ROUND);
 
     check(lit_pixels() > quiet * 10, "a packet fills the screen with a great deal more");
-    write_image("hud.ppm");
+    write_image("hud.ppm", true);
 
     /* The road is drawn in the road colour and the alarm colour never appears
      * unless the phone says the route has been left. */
@@ -302,7 +331,7 @@ static void test_screen(void)
     memcpy(off_route, GUIDANCE, sizeof(GUIDANCE));
     off_route[9] = VISOR_FLAG_OFF_ROUTE;
     visor_hud_receive_guidance(&state, off_route, sizeof(off_route));
-    visor_hud_render(&canvas, &state, 1000000);
+    visor_hud_render(&canvas, &state, 1000000, VISOR_PANEL_ROUND);
 
     alarm = 0;
     for (int index = 0; index < WIDTH * HEIGHT; index++) {
@@ -311,7 +340,90 @@ static void test_screen(void)
         }
     }
     check(alarm > 100, "and a good deal is once the route has been left");
-    write_image("hud-off-route.ppm");
+    write_image("hud-off-route.ppm", true);
+}
+
+/* Nothing in the layout is written in pixels, so a denser panel should cost a
+ * number and nothing else. This renders the same packets onto the 466 pixel
+ * AMOLED those round boards also come with, and writes it out to be looked at.
+ */
+#define DENSE 466
+static uint16_t dense_pixels[DENSE * DENSE];
+
+static void test_denser_glass(void)
+{
+    printf("a denser panel\n");
+
+    visor_canvas_t canvas = { dense_pixels, DENSE, DENSE };
+    visor_hud_state_t state;
+    visor_hud_reset(&state);
+
+    visor_hud_receive_guidance(&state, GUIDANCE, sizeof(GUIDANCE));
+    visor_hud_receive_path(&state, PATH, sizeof(PATH), 1000000);
+    visor_hud_render(&canvas, &state, 1000000, VISOR_PANEL_ROUND);
+
+    int lost = 0;
+    float radius = DENSE / 2.0f;
+    for (int index = 0; index < DENSE * DENSE; index++) {
+        if (dense_pixels[index] == 0) {
+            continue;
+        }
+        float dx = (float)(index % DENSE) - radius;
+        float dy = (float)(index / DENSE) - radius;
+        if (dx * dx + dy * dy > radius * radius) {
+            lost++;
+        }
+    }
+    check(lost == 0, "the layout holds at a different size without being told");
+
+    FILE *file = fopen("hud-466.ppm", "wb");
+    if (file != NULL) {
+        fprintf(file, "P6\n%d %d\n255\n", DENSE, DENSE);
+        for (int index = 0; index < DENSE * DENSE; index++) {
+            uint16_t pixel = dense_pixels[index];
+            float dx = (float)(index % DENSE) - radius;
+            float dy = (float)(index / DENSE) - radius;
+            if (dx * dx + dy * dy > radius * radius) {
+                pixel = visor_rgb(26, 26, 30);
+            }
+            unsigned char rgb[3] = {
+                (unsigned char)(((pixel >> 11) & 0x1F) * 255 / 31),
+                (unsigned char)(((pixel >> 5) & 0x3F) * 255 / 63),
+                (unsigned char)((pixel & 0x1F) * 255 / 31),
+            };
+            fwrite(rgb, 1, 3, file);
+        }
+        fclose(file);
+    }
+}
+
+/* The layout has to hold on round glass, and the awkward case is a four figure
+ * distance in the narrowest part of the panel. */
+static void test_round_glass(void)
+{
+    printf("round glass\n");
+
+    visor_canvas_t canvas = { pixels, WIDTH, HEIGHT };
+    visor_hud_state_t state;
+    visor_hud_reset(&state);
+
+    uint8_t far[sizeof(GUIDANCE)];
+    memcpy(far, GUIDANCE, sizeof(GUIDANCE));
+    far[2] = 0x0F; /* 9999 m, the widest the field can be */
+    far[3] = 0x27;
+
+    visor_hud_receive_guidance(&state, far, sizeof(far));
+    visor_hud_receive_path(&state, PATH, sizeof(PATH), 1000000);
+    visor_hud_render(&canvas, &state, 1000000, VISOR_PANEL_ROUND);
+
+    check(lit_off_the_glass() == 0, "nothing is drawn where there is no glass");
+    write_image("hud-round-9999.ppm", true);
+
+    /* And the road itself, which is the one thing allowed past the edge: a
+     * turn 300 m out and 400 m to the side genuinely runs off the panel, and
+     * cropping it is what the glass does. */
+    visor_hud_render(&canvas, &state, 1000000, VISOR_PANEL_SQUARE);
+    check(lit_pixels() > 0, "a square panel draws the same layout");
 }
 
 static void test_numbers(void)
@@ -352,6 +464,8 @@ int main(void)
     test_a_new_junction_does_not_slide();
     test_numbers();
     test_screen();
+    test_round_glass();
+    test_denser_glass();
 
     printf("\n%d checks, %d failures\n", checks, failures);
     return failures == 0 ? 0 : 1;

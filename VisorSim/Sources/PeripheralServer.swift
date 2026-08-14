@@ -51,6 +51,11 @@ final class PeripheralServer: NSObject, CBPeripheralManagerDelegate {
     struct PathFeed: Equatable {
         var latest: DecodedPath?
         var previous: DecodedPath?
+        /// The newest write as it arrived. Kept alongside the decoded form
+        /// because the device preview runs the firmware's own decoder, and
+        /// handing it something already decoded would decode it twice and
+        /// prove nothing.
+        var data: Data?
         var arrivedAt: Date?
         /// Measured rather than assumed, so the drawing keeps up with whatever
         /// rate the phone actually manages.
@@ -108,6 +113,7 @@ final class PeripheralServer: NSObject, CBPeripheralManagerDelegate {
 
         path.previous = path.latest
         path.latest = decoded
+        path.data = data
         path.arrivedAt = now
         pathCount += 1
     }

@@ -1,5 +1,6 @@
 #include "visor_hud.h"
 
+#include <math.h>
 #include <string.h>
 
 /* Dark, because this is read at night as often as by day, and because every
@@ -62,6 +63,28 @@ static uint16_t road_colour(const visor_hud_state_t *state)
     return COLOUR_ROAD;
 }
 
+/* How much room a band has, measured at its worst row.
+ *
+ * On a round panel the glass narrows towards the top and bottom, so a band's
+ * width is decided by whichever of its edges is furthest from the middle. Put
+ * something wider than this and it does not get clipped, it simply is not
+ * there.
+ */
+static float band_half_width(const visor_canvas_t *canvas, visor_panel_shape_t shape, int top, int bottom)
+{
+    if (shape == VISOR_PANEL_SQUARE) {
+        return (float)canvas->width * 0.5f;
+    }
+
+    float radius = (float)(canvas->width < canvas->height ? canvas->width : canvas->height) * 0.5f;
+    float middle = (float)canvas->height * 0.5f;
+    float from_top = fabsf((float)top - middle);
+    float from_bottom = fabsf((float)bottom - middle);
+    float furthest = from_top > from_bottom ? from_top : from_bottom;
+
+    return furthest >= radius ? 0.0f : sqrtf(radius * radius - furthest * furthest);
+}
+
 static void render_road(const visor_canvas_t *canvas,
                         const visor_hud_state_t *state,
                         int64_t now_us,
@@ -112,17 +135,17 @@ static void render_road(const visor_canvas_t *canvas,
     visor_draw_triangle(&panel, nose, left, right, COLOUR_TEXT);
 }
 
-static void render_instruction(const visor_canvas_t *canvas, const visor_hud_state_t *state, int height)
+static void render_instruction(const visor_canvas_t *canvas,
+                               const visor_hud_state_t *state,
+                               int top,
+                               int height,
+                               float half_width)
 {
-    visor_canvas_t band = {
-        .pixels = canvas->pixels,
-        .width = canvas->width,
-        .height = height,
-    };
+    float middle_y = (float)top + (float)height * 0.5f;
 
     if (!state->has_guidance) {
-        visor_pt_t middle = { (float)band.width * 0.5f, (float)band.height * 0.5f };
-        visor_draw_disc(&band, middle, 6.0f, COLOUR_DIM);
+        visor_pt_t middle = { (float)canvas->width * 0.5f, middle_y };
+        visor_draw_disc(canvas, middle, 6.0f, COLOUR_DIM);
         return;
     }
 
@@ -137,23 +160,41 @@ static void render_instruction(const visor_canvas_t *canvas, const visor_hud_sta
     float digits = (float)height * 0.58f;
     float gap = (float)height * 0.18f;
     float number = visor_draw_number_width(metres, digits);
-    float left = ((float)band.width - (size * 2.0f + gap + number)) * 0.5f;
+    float total = size * 2.0f + gap + number;
 
-    visor_pt_t arrow = { left + size, (float)height * 0.5f };
-    visor_draw_maneuver(&band, state->guidance.maneuver, arrow, size, COLOUR_TEXT, COLOUR_BACKGROUND);
+    /* Four digits are wider than three, and on round glass there may not be
+     * room for them. Shrinking the whole group keeps it readable and keeps it
+     * on the panel; letting it run off the edge would lose the leading digit,
+     * which is the one that matters. */
+    float room = half_width * 2.0f - 10.0f;
+    if (total > room && room > 0.0f) {
+        float shrink = room / total;
+        size *= shrink;
+        digits *= shrink;
+        gap *= shrink;
+        number = visor_draw_number_width(metres, digits);
+        total = size * 2.0f + gap + number;
+    }
 
-    visor_pt_t at = { left + size * 2.0f + gap, ((float)height - digits) * 0.5f };
-    visor_draw_number(&band, metres, at, digits, COLOUR_TEXT);
+    float left = (float)canvas->width * 0.5f - total * 0.5f;
+
+    visor_pt_t arrow = { left + size, middle_y };
+    visor_draw_maneuver(canvas, state->guidance.maneuver, arrow, size, COLOUR_TEXT, COLOUR_BACKGROUND);
+
+    visor_pt_t at = { left + size * 2.0f + gap, middle_y - digits * 0.5f };
+    visor_draw_number(canvas, metres, at, digits, COLOUR_TEXT);
 }
 
-static void render_flags(const visor_canvas_t *canvas, const visor_hud_state_t *state, int top)
+static void render_flags(const visor_canvas_t *canvas, const visor_hud_state_t *state, int row)
 {
     if (!state->has_guidance) {
         return;
     }
 
     /* Three lamps rather than three words: at a glance a rider reads colour and
-     * position, and words would need the font this display does not carry. */
+     * position, and words would need the font this display does not carry.
+     * Centred, because on round glass the corners a status bar would live in
+     * are not there. */
     struct {
         uint8_t bit;
         uint16_t colour;
@@ -163,22 +204,37 @@ static void render_flags(const visor_canvas_t *canvas, const visor_hud_state_t *
         { VISOR_FLAG_WEAK_GPS, visor_rgb(240, 220, 0) },
     };
 
+    float spacing = (float)canvas->width * 0.11f;
+    float centre = (float)canvas->width * 0.5f;
+
     for (int index = 0; index < 3; index++) {
-        visor_pt_t at = { 16.0f + (float)index * 26.0f, (float)top };
+        visor_pt_t at = { centre + (float)(index - 1) * spacing, (float)row };
         bool on = (state->guidance.flags & lamps[index].bit) != 0;
         visor_draw_disc(canvas, at, 7.0f, on ? lamps[index].colour : visor_rgb(28, 32, 36));
     }
 }
 
-void visor_hud_render(const visor_canvas_t *canvas, const visor_hud_state_t *state, int64_t now_us)
+void visor_hud_render(const visor_canvas_t *canvas,
+                      const visor_hud_state_t *state,
+                      int64_t now_us,
+                      visor_panel_shape_t shape)
 {
     visor_draw_fill(canvas, COLOUR_BACKGROUND);
 
-    int band = canvas->height * 30 / 100;
-    int lamps = canvas->height - 18;
-    int road_height = lamps - band - 12;
+    /* Laid out down the middle of the glass rather than out to its edges. On a
+     * round panel the corners simply are not there, and a layout that pretends
+     * otherwise loses whatever it puts in them. On a square one this reads as
+     * generous margins, which is a cheap price for one layout instead of two.
+     */
+    int instruction_top = canvas->height * 14 / 100;
+    int instruction_height = canvas->height * 26 / 100;
+    int road_top = canvas->height * 42 / 100;
+    int road_height = canvas->height * 44 / 100;
+    int lamp_row = canvas->height * 91 / 100;
 
-    render_instruction(canvas, state, band);
-    render_road(canvas, state, now_us, band, road_height);
-    render_flags(canvas, state, lamps);
+    float room = band_half_width(canvas, shape, instruction_top, instruction_top + instruction_height);
+
+    render_instruction(canvas, state, instruction_top, instruction_height, room);
+    render_road(canvas, state, now_us, road_top, road_height);
+    render_flags(canvas, state, lamp_row);
 }

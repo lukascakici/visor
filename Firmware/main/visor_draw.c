@@ -135,18 +135,32 @@ void visor_draw_triangle(const visor_canvas_t *canvas,
         return;
     }
 
+    /* Sampled nine times a pixel rather than once.
+     *
+     * Lines already soften their own edges from the distance to the segment,
+     * and a triangle has no such measure to hand. Testing it once at the centre
+     * leaves every diagonal a staircase, which on a panel this coarse is the
+     * difference between an arrowhead and a flight of steps. */
     for (int y = top; y <= bottom; y++) {
         for (int x = left; x <= right; x++) {
-            float px = (float)x + 0.5f;
-            float py = (float)y + 0.5f;
+            int hits = 0;
 
-            float w0 = ((b.x - a.x) * (py - a.y) - (px - a.x) * (b.y - a.y)) / area;
-            float w1 = ((c.x - b.x) * (py - b.y) - (px - b.x) * (c.y - b.y)) / area;
-            float w2 = ((a.x - c.x) * (py - c.y) - (px - c.x) * (a.y - c.y)) / area;
+            for (int sy = 0; sy < 3; sy++) {
+                for (int sx = 0; sx < 3; sx++) {
+                    float px = (float)x + (float)sx / 3.0f + 1.0f / 6.0f;
+                    float py = (float)y + (float)sy / 3.0f + 1.0f / 6.0f;
 
-            if (w0 >= 0.0f && w1 >= 0.0f && w2 >= 0.0f) {
-                blend(canvas, x, y, colour, 1.0f);
+                    float w0 = ((b.x - a.x) * (py - a.y) - (px - a.x) * (b.y - a.y)) / area;
+                    float w1 = ((c.x - b.x) * (py - b.y) - (px - b.x) * (c.y - b.y)) / area;
+                    float w2 = ((a.x - c.x) * (py - c.y) - (px - c.x) * (a.y - c.y)) / area;
+
+                    if (w0 >= 0.0f && w1 >= 0.0f && w2 >= 0.0f) {
+                        hits++;
+                    }
+                }
             }
+
+            blend(canvas, x, y, colour, (float)hits / 9.0f);
         }
     }
 }
