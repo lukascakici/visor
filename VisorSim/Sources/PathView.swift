@@ -67,7 +67,8 @@ struct PathView: View {
         // Read back out of the packet, so a road drawn from four points does
         // not get to look like one drawn from forty however smoothly it moves.
         let ahead = (path.points.map(\.ahead).max() ?? 0) / 10
-        return Text("\(path.points.count) points · \(ahead) m ahead")
+        let rider = Int((path.riderFraction * 100).rounded())
+        return Text("\(path.points.count) points · \(ahead) m ahead · rider at \(rider)%")
             .font(.system(size: 10, design: .monospaced))
             .foregroundStyle(.secondary)
     }
@@ -89,8 +90,22 @@ struct PathView: View {
             CGPoint(x: size.width / 2 + point.x * scale, y: riderY - point.y * scale)
         }
 
+        // Split where the packet says the rider is, not where the road happens
+        // to pass closest. Past a sharp corner the road ahead swings back over
+        // the rider and would win that comparison, painting the way forward as
+        // the way already ridden.
+        let split = riderIndex(at: crossing)
+
+        var behind = Path()
+        behind.addLines(road[...split].map(place))
+        context.stroke(
+            behind,
+            with: .color(.gray),
+            style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round)
+        )
+
         var line = Path()
-        line.addLines(road.map(place))
+        line.addLines(road[split...].map(place))
         context.stroke(
             line,
             with: .color(tint),
@@ -112,6 +127,23 @@ struct PathView: View {
         arrow.addLine(to: CGPoint(x: rider.x + 7, y: rider.y + 7))
         arrow.closeSubpath()
         context.fill(arrow, with: .color(.white))
+    }
+
+    /// Which of the resampled points the rider sits at.
+    ///
+    /// A fraction of a line is the same fraction however many points it is
+    /// drawn with, which is why the packet sends one rather than an index.
+    /// Crossed between packets like everything else, so the join between grey
+    /// and white slides rather than hops.
+    private func riderIndex(at crossing: Double) -> Int {
+        guard let latest = feed.latest else { return 0 }
+
+        var fraction = latest.riderFraction
+        if let before = feed.previous {
+            fraction = before.riderFraction + (fraction - before.riderFraction) * crossing
+        }
+
+        return min(samples - 1, max(0, Int((fraction * Double(samples - 1)).rounded())))
     }
 
     /// How far between the previous road and the newest one to draw, `0` to `1`.
