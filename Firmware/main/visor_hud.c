@@ -25,7 +25,10 @@ void visor_hud_reset(visor_hud_state_t *state)
     state->path_interval_us = 1000000;
 }
 
-void visor_hud_receive_guidance(visor_hud_state_t *state, const uint8_t *data, size_t length)
+void visor_hud_receive_guidance(visor_hud_state_t *state,
+                                const uint8_t *data,
+                                size_t length,
+                                int64_t now_us)
 {
     visor_guidance_t decoded;
     if (!visor_guidance_decode(data, length, &decoded)) {
@@ -33,7 +36,14 @@ void visor_hud_receive_guidance(visor_hud_state_t *state, const uint8_t *data, s
     }
 
     state->guidance = decoded;
+    state->guidance_arrived_us = now_us;
     state->has_guidance = true;
+}
+
+/* Whether anything on screen is still worth believing. */
+static bool is_current(const visor_hud_state_t *state, int64_t now_us)
+{
+    return state->has_guidance && (now_us - state->guidance_arrived_us) < VISOR_HUD_STALE_US;
 }
 
 void visor_hud_receive_path(visor_hud_state_t *state,
@@ -135,9 +145,10 @@ static void render_rider(const visor_canvas_t *canvas, uint16_t colour, float x,
 
 static void render_road(const visor_canvas_t *canvas,
                         const visor_hud_state_t *state,
-                        int64_t now_us)
+                        int64_t now_us,
+                        bool current)
 {
-    if (!state->has_path) {
+    if (!state->has_path || !current) {
         return;
     }
 
@@ -255,11 +266,14 @@ static void render_instruction(const visor_canvas_t *canvas,
                                const visor_hud_state_t *state,
                                int top,
                                int height,
-                               float half_width)
+                               float half_width,
+                               bool current)
 {
     float middle_y = (float)top + (float)height * 0.5f;
 
-    if (!state->has_guidance) {
+    if (!current) {
+        /* Nothing anyone should act on. Shown as an absence rather than as
+         * stale numbers, because a rider cannot tell those apart. */
         visor_pt_t middle = { (float)canvas->width * 0.5f, middle_y };
         visor_draw_disc(canvas, middle, (float)canvas->width * 0.025f, COLOUR_DIM);
         return;
@@ -301,9 +315,12 @@ static void render_instruction(const visor_canvas_t *canvas,
     visor_draw_number(canvas, metres, at, digits, COLOUR_TEXT);
 }
 
-static void render_flags(const visor_canvas_t *canvas, const visor_hud_state_t *state, int row)
+static void render_flags(const visor_canvas_t *canvas,
+                         const visor_hud_state_t *state,
+                         int row,
+                         bool current)
 {
-    if (!state->has_guidance) {
+    if (!current) {
         return;
     }
 
@@ -346,10 +363,12 @@ void visor_hud_render(const visor_canvas_t *canvas,
     int instruction_height = canvas->height * 19 / 100;
     int lamp_row = canvas->height * 935 / 1000;
 
-    render_road(canvas, state, now_us);
+    bool current = is_current(state, now_us);
+
+    render_road(canvas, state, now_us, current);
     render_frost(canvas, frost_top);
 
     float room = band_half_width(canvas, shape, instruction_top, instruction_top + instruction_height);
-    render_instruction(canvas, state, instruction_top, instruction_height, room);
-    render_flags(canvas, state, lamp_row);
+    render_instruction(canvas, state, instruction_top, instruction_height, room, current);
+    render_flags(canvas, state, lamp_row, current);
 }

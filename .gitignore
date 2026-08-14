@@ -8,5 +8,10 @@ xcuserdata/
 VisorApp/NOTES.md
 VisorSim/NOTES.md
 build/
+Firmware/build/
+Firmware/sdkconfig
+Firmware/sdkconfig.old
+Firmware/managed_components/
+Firmware/dependencies.lock
 Firmware/test/host_test
 Firmware/test/*.ppm

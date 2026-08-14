@@ -51,6 +51,22 @@ can be run without a board.
 Decoding, the frame, the crossing between packets and the whole rasteriser are
 plain C over plain memory, so this needs no ESP-IDF and no toolchain. It leaves
 `hud.ppm` next to itself, which is what the display would actually look like.
+The macOS simulator compiles the same files, so its device preview is the
+firmware's own pixels rather than an impression of them.
+
+On a board:
+
+    cd Firmware
+    idf.py set-target esp32s3
+    idf.py flash monitor
+
+Two files have hardware in them and the rest have none. `visor_ble.c` is the
+NimBLE server: it advertises the service, takes writes on both characteristics
+and asks for the largest MTU iOS will grant, because that number decides how
+much road fits in a packet. `visor_panel.c` is the glass, and it is the only
+file that knows the panel is a 240 pixel round GC9A01 or which pins it is on;
+everything drawn is written in fractions of the canvas, so a different panel is
+a different `visor_panel.c` and nothing else.
 
 There is no font anywhere: numbers are seven segments and arrows are polygons.
 A font is the one asset that would have to be generated, embedded and kept in

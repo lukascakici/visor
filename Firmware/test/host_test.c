@@ -340,7 +340,7 @@ static void test_screen(void)
     // the only bright thing a silent display shows.
     int quiet = content_pixels();
 
-    visor_hud_receive_guidance(&state, GUIDANCE, sizeof(GUIDANCE));
+    visor_hud_receive_guidance(&state, GUIDANCE, sizeof(GUIDANCE), 1000000);
     visor_hud_receive_path(&state, PATH, sizeof(PATH), 1000000);
     visor_hud_render(&canvas, &state, 1000000, VISOR_PANEL_ROUND);
 
@@ -360,7 +360,7 @@ static void test_screen(void)
     uint8_t off_route[sizeof(GUIDANCE)];
     memcpy(off_route, GUIDANCE, sizeof(GUIDANCE));
     off_route[9] = VISOR_FLAG_OFF_ROUTE;
-    visor_hud_receive_guidance(&state, off_route, sizeof(off_route));
+    visor_hud_receive_guidance(&state, off_route, sizeof(off_route), 1000000);
     visor_hud_render(&canvas, &state, 1000000, VISOR_PANEL_ROUND);
 
     alarm = 0;
@@ -388,7 +388,7 @@ static void test_denser_glass(void)
     visor_hud_state_t state;
     visor_hud_reset(&state);
 
-    visor_hud_receive_guidance(&state, GUIDANCE, sizeof(GUIDANCE));
+    visor_hud_receive_guidance(&state, GUIDANCE, sizeof(GUIDANCE), 1000000);
     visor_hud_receive_path(&state, PATH, sizeof(PATH), 1000000);
     visor_hud_render(&canvas, &state, 1000000, VISOR_PANEL_ROUND);
 
@@ -449,7 +449,7 @@ static void test_the_rider_stays_visible_on_the_road(void)
     visor_hud_state_t state;
     visor_hud_reset(&state);
 
-    visor_hud_receive_guidance(&state, GUIDANCE, sizeof(GUIDANCE));
+    visor_hud_receive_guidance(&state, GUIDANCE, sizeof(GUIDANCE), 1000000);
     visor_hud_receive_path(&state, STRAIGHT, sizeof(STRAIGHT), 1000000);
     visor_hud_render(&canvas, &state, 1000000, VISOR_PANEL_ROUND);
 
@@ -514,6 +514,38 @@ static void test_the_rider_is_where_the_packet_says(void)
     check(view.rider == VISOR_VIEW_SAMPLES - 1, "and all of it behind means all of it");
 }
 
+/* Silence is a fault, and has to look like one.
+ *
+ * A link drops without saying so. The last packet simply stops being followed
+ * by another, and every number on the glass quietly becomes a lie about where
+ * the rider is.
+ */
+static void test_a_link_that_goes_quiet_stops_being_believed(void)
+{
+    printf("a link that goes quiet\n");
+
+    visor_canvas_t canvas = { pixels, WIDTH, HEIGHT };
+    visor_hud_state_t state;
+    visor_hud_reset(&state);
+
+    visor_hud_receive_guidance(&state, GUIDANCE, sizeof(GUIDANCE), 1000000);
+    visor_hud_receive_path(&state, PATH, sizeof(PATH), 1000000);
+
+    visor_hud_render(&canvas, &state, 1000000, VISOR_PANEL_ROUND);
+    int speaking = content_pixels();
+    check(speaking > 200, "a fresh packet fills the glass");
+
+    /* Still inside the window: nothing has changed, and nothing should. */
+    visor_hud_render(&canvas, &state, 1000000 + VISOR_HUD_STALE_US - 100000, VISOR_PANEL_ROUND);
+    check(content_pixels() == speaking, "and stays until it is genuinely old");
+
+    /* Past it: the instruction and the road both go, together. Dropping one and
+     * keeping the other would leave a map with no turn on it, which reads as a
+     * road with no turn on it. */
+    visor_hud_render(&canvas, &state, 1000000 + VISOR_HUD_STALE_US + 1, VISOR_PANEL_ROUND);
+    check(content_pixels() < speaking / 4, "and then says nothing rather than something old");
+}
+
 /* The layout has to hold on round glass, and the awkward case is a four figure
  * distance in the narrowest part of the panel. */
 static void test_round_glass(void)
@@ -529,7 +561,7 @@ static void test_round_glass(void)
     far[2] = 0x0F; /* 9999 m, the widest the field can be */
     far[3] = 0x27;
 
-    visor_hud_receive_guidance(&state, far, sizeof(far));
+    visor_hud_receive_guidance(&state, far, sizeof(far), 1000000);
     visor_hud_receive_path(&state, PATH, sizeof(PATH), 1000000);
     visor_hud_render(&canvas, &state, 1000000, VISOR_PANEL_ROUND);
 
@@ -588,7 +620,7 @@ static void bench(void)
 
     visor_hud_state_t state;
     visor_hud_reset(&state);
-    visor_hud_receive_guidance(&state, GUIDANCE, sizeof(GUIDANCE));
+    visor_hud_receive_guidance(&state, GUIDANCE, sizeof(GUIDANCE), 1000000);
     visor_hud_receive_path(&state, PATH, sizeof(PATH), 1000000);
 
     printf("\nframe cost\n");
@@ -617,6 +649,7 @@ int main(int argc, char **argv)
     test_a_new_junction_does_not_slide();
     test_numbers();
     test_screen();
+    test_a_link_that_goes_quiet_stops_being_believed();
     test_the_rider_is_where_the_packet_says();
     test_the_rider_stays_visible_on_the_road();
     test_round_glass();

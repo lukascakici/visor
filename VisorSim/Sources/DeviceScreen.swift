@@ -35,8 +35,9 @@ final class DeviceScreen {
     }
 
     func receiveGuidance(_ data: Data) {
+        let now = microseconds
         data.withUnsafeBytes { raw in
-            visor_hud_receive_guidance(&state, raw.bindMemory(to: UInt8.self).baseAddress, data.count)
+            visor_hud_receive_guidance(&state, raw.bindMemory(to: UInt8.self).baseAddress, data.count, now)
         }
     }
 

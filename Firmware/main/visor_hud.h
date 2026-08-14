@@ -20,8 +20,19 @@
  * nothing must not show the numbers it would have shown, because a rider cannot
  * tell a stale instruction from a current one.
  */
+/* How old a packet may get before the display stops believing it.
+ *
+ * A link drops without announcing itself: the phone goes out of range, the app
+ * is killed, the battery dies, and the last packet simply stops being followed
+ * by another. A display that keeps showing "turn right in 90 m" from a minute
+ * ago will walk a rider into a junction, and nothing in the packet can tell
+ * them it is old. Silence has to mean something on this side.
+ */
+#define VISOR_HUD_STALE_US 5000000
+
 typedef struct {
     bool has_guidance;
+    int64_t guidance_arrived_us;
     visor_guidance_t guidance;
 
     bool has_path;
@@ -36,7 +47,10 @@ void visor_hud_reset(visor_hud_state_t *state);
 
 /* Takes a write from the phone. Unrecognised or truncated writes are ignored
  * rather than allowed to blank the screen. */
-void visor_hud_receive_guidance(visor_hud_state_t *state, const uint8_t *data, size_t length);
+void visor_hud_receive_guidance(visor_hud_state_t *state,
+                                const uint8_t *data,
+                                size_t length,
+                                int64_t now_us);
 void visor_hud_receive_path(visor_hud_state_t *state,
                             const uint8_t *data,
                             size_t length,
