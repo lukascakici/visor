@@ -37,6 +37,13 @@ enum HUDLine {
         return "        \(header)  │ \(data.count) bytes │ \"\(name)\""
     }
 
+    /// The path packet, header only. Its body is coordinates, and a line of hex
+    /// coordinates tells nobody anything; `--map` draws them instead.
+    static func pathBytes(_ data: Data, points: Int) -> String {
+        let header = data.prefix(4).map { String(format: "%02X", $0) }.joined(separator: " ")
+        return "        \(header) …\(pad("", 15))  │ \(data.count) bytes │ \(points) points"
+    }
+
     /// The three flag bits the packet carries, spelled out.
     private static func flags(_ state: GuidanceState) -> String {
         var raised: [String] = []
