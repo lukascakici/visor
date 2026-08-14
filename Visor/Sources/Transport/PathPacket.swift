@@ -9,7 +9,7 @@ import Guidance
 ///     byte  0      protocol version
 ///     byte  1      number of points
 ///     byte  2      index of the maneuver point, 255 for none
-///     byte  3      padding, zero
+///     byte  3      where the rider is along the line, 0 to 255
 ///     bytes 4...   points, each int16 right then int16 ahead, decimeters
 ///
 /// Coordinates, not pixels. A 240x240 display holds 115 kB of them, which no
@@ -22,9 +22,13 @@ import Guidance
 /// this ever carries, and resolve to 10 cm, which is finer than GPS can place
 /// the rider. Values beyond that saturate rather than wrap, as everywhere else.
 ///
-/// Byte 3 is padding rather than a field looking for a purpose: it puts the
-/// points on a four-byte boundary, which is where firmware reading them two
-/// bytes at a time wants them.
+/// Byte 3 began as padding, to put the points on a four-byte boundary where
+/// firmware reading them two bytes at a time wants them. It still does that,
+/// and it now also carries the one thing a display cannot work out for itself:
+/// how much of this line is already behind the rider. Left to guess, a display
+/// looks for the point nearest its own origin, and past a sharp corner the road
+/// ahead swings back and wins that comparison — so the way forward gets painted
+/// as the way already ridden.
 public struct PathPacket: Hashable, Sendable {
     /// The version in byte 0. This layout's own, unrelated to the guidance
     /// packet's: the two travel on different characteristics and can change
@@ -81,11 +85,13 @@ extension PathPacket {
             marker = UInt8(index)
         }
 
+        let rider = UInt8(min(255, max(0, (path.riderFraction * 255).rounded())))
+
         var data = Data(capacity: Self.headerSize + points.count * Self.pointSize)
         data.append(Self.version)
         data.append(UInt8(points.count))
         data.append(marker)
-        data.append(0)
+        data.append(rider)
 
         for point in points {
             data.append(littleEndian: Self.decimeters(point.right))

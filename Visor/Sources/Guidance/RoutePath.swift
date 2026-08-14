@@ -31,12 +31,22 @@ public struct RoutePath: Hashable, Sendable {
     /// saying where the turn is, leaves the rider to guess which bend is theirs.
     public let maneuverIndex: Int?
 
-    public init(points: [Point], maneuverIndex: Int?) {
+    /// How far along `points` the rider is: `0` at the first, `1` at the last.
+    ///
+    /// Told rather than left to be worked out. A display can only guess at this
+    /// by looking for the point nearest to itself, and on a sharp turn the road
+    /// beyond the corner comes back past the rider and wins that comparison,
+    /// which paints the road ahead as road already ridden. The phone knows the
+    /// answer exactly and it costs one byte to say it.
+    public let riderFraction: Double
+
+    public init(points: [Point], maneuverIndex: Int?, riderFraction: Double = 0) {
         self.points = points
         self.maneuverIndex = maneuverIndex
+        self.riderFraction = riderFraction
     }
 
-    public static let empty = RoutePath(points: [], maneuverIndex: nil)
+    public static let empty = RoutePath(points: [], maneuverIndex: nil, riderFraction: 0)
 }
 
 extension RouteIndex {
@@ -161,10 +171,11 @@ extension RouteIndex {
         // barely a line.
         let margin = 1.0
         guard limit >= 4, maneuverAt > from + margin, maneuverAt < to - margin else {
-            let whole = thinned(from: from, to: to, toAtMost: limit)
+            let drawn = whole(from: from, to: to, toAtMost: limit, origin: origin, rotation: rotation)
             return RoutePath(
-                points: whole.map { local($0, origin: origin, rotation: rotation) },
-                maneuverIndex: nil
+                points: drawn,
+                maneuverIndex: nil,
+                riderFraction: Self.riderPosition(along: drawn)
             )
         }
 
@@ -178,11 +189,65 @@ extension RouteIndex {
         let before = thinned(from: from, to: maneuverAt, toAtMost: budgetBefore)
         let after = thinned(from: maneuverAt, to: to, toAtMost: budgetAfter)
 
-        let joined = before + after.dropFirst()
+        let joined = (before + after.dropFirst()).map { local($0, origin: origin, rotation: rotation) }
         return RoutePath(
-            points: joined.map { local($0, origin: origin, rotation: rotation) },
-            maneuverIndex: before.count - 1
+            points: joined,
+            maneuverIndex: before.count - 1,
+            riderFraction: Self.riderPosition(along: joined)
         )
+    }
+
+    private func whole(
+        from: Double,
+        to: Double,
+        toAtMost limit: Int,
+        origin: Coordinate,
+        rotation: Double
+    ) -> [RoutePath.Point] {
+        thinned(from: from, to: to, toAtMost: limit).map { local($0, origin: origin, rotation: rotation) }
+    }
+
+    /// Where the rider falls along a drawn line, as a fraction of its length.
+    ///
+    /// Found by projection rather than by counting route metres, because the
+    /// line that gets sent is the simplified one and its corners are cut. This
+    /// measures the line the display will actually receive.
+    static func riderPosition(along points: [RoutePath.Point]) -> Double {
+        guard points.count > 1 else { return 0 }
+
+        var travelled = [0.0]
+        for index in 1..<points.count {
+            let step = (points[index].right - points[index - 1].right,
+                        points[index].ahead - points[index - 1].ahead)
+            travelled.append(travelled[index - 1] + (step.0 * step.0 + step.1 * step.1).squareRoot())
+        }
+
+        guard let total = travelled.last, total > 0 else { return 0 }
+
+        var closest = Double.infinity
+        var at = 0.0
+
+        for index in 1..<points.count {
+            let a = points[index - 1]
+            let b = points[index]
+            let run = (right: b.right - a.right, ahead: b.ahead - a.ahead)
+            let square = run.right * run.right + run.ahead * run.ahead
+            guard square > 0 else { continue }
+
+            // The rider is the origin of this frame, so projecting onto the
+            // segment is just how far along it the foot of the perpendicular
+            // from nothing falls.
+            let fraction = min(1, max(0, -(a.right * run.right + a.ahead * run.ahead) / square))
+            let point = (right: a.right + fraction * run.right, ahead: a.ahead + fraction * run.ahead)
+            let away = point.right * point.right + point.ahead * point.ahead
+
+            if away < closest {
+                closest = away
+                at = travelled[index - 1] + fraction * square.squareRoot()
+            }
+        }
+
+        return min(1, max(0, at / total))
     }
 
     /// A stretch of the route, stripped of detail nobody can see and then cut

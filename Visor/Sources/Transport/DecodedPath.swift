@@ -23,6 +23,8 @@ public struct DecodedPath: Hashable, Sendable {
     public let points: [Point]
     /// Which point the maneuver sits at, when the packet named one that exists.
     public let maneuverIndex: Int?
+    /// How far along the points the rider is, `0` to `1`.
+    public let riderFraction: Double
 }
 
 extension DecodedPath {
@@ -56,6 +58,7 @@ extension DecodedPath {
         self.version = bytes[0]
         self.points = points
         self.maneuverIndex = marker < points.count ? marker : nil
+        self.riderFraction = Double(bytes[3]) / 255
     }
 }
 

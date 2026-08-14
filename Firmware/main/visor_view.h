@@ -57,6 +57,10 @@ typedef struct {
 
 typedef struct {
     visor_xy_t road[VISOR_VIEW_SAMPLES];
+    /* Which sample the rider sits at, so the road behind them can be told from
+     * the road in front. Carried over from the packet rather than looked for
+     * here; see `rider` in visor_path_t for why looking is a mistake. */
+    int rider;
     bool has_junction;
     visor_xy_t junction;
 } visor_view_t;

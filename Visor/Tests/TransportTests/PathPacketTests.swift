@@ -11,7 +11,8 @@ private func point(_ right: Double, _ ahead: Double) -> RoutePath.Point {
 /// A short line coming from behind, turning right at the second point.
 private let samplePath = RoutePath(
     points: [point(0, -100), point(0, 50), point(120, 50)],
-    maneuverIndex: 1
+    maneuverIndex: 1,
+    riderFraction: 100.0 / 270.0
 )
 
 final class PathPacketTests: XCTestCase {
@@ -23,7 +24,8 @@ final class PathPacketTests: XCTestCase {
         XCTAssertEqual(bytes[0], PathPacket.version)
         XCTAssertEqual(bytes[1], 3)
         XCTAssertEqual(bytes[2], 1)
-        XCTAssertEqual(bytes[3], 0)
+        // 100 m along a 270 m line, in 255ths.
+        XCTAssertEqual(bytes[3], 94)
         XCTAssertEqual(bytes.count, PathPacket.headerSize + 3 * PathPacket.pointSize)
     }
 
@@ -116,6 +118,7 @@ final class PathPacketTests: XCTestCase {
 
         XCTAssertEqual(decoded.version, PathPacket.version)
         XCTAssertEqual(decoded.maneuverIndex, 1)
+        XCTAssertEqual(decoded.riderFraction, 100.0 / 270.0, accuracy: 0.01)
         XCTAssertEqual(decoded.points, [
             DecodedPath.Point(right: 0, ahead: -1_000),
             DecodedPath.Point(right: 0, ahead: 500),

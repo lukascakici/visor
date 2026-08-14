@@ -97,6 +97,7 @@ void visor_view_between(const visor_path_t *previous,
     }
 
     out->has_junction = false;
+    out->rider = 0;
 
     if (latest == NULL || latest->count == 0) {
         for (int index = 0; index < VISOR_VIEW_SAMPLES; index++) {
@@ -111,6 +112,17 @@ void visor_view_between(const visor_path_t *previous,
     }
     if (crossing > 1.0f) {
         crossing = 1.0f;
+    }
+
+    /* The packet says where the rider is as a fraction of the whole line, which
+     * survives resampling exactly: a fraction of a line is the same fraction
+     * however many points it is drawn with. */
+    out->rider = (int)(((float)latest->rider / 255.0f) * (float)(VISOR_VIEW_SAMPLES - 1) + 0.5f);
+    if (out->rider < 0) {
+        out->rider = 0;
+    }
+    if (out->rider > VISOR_VIEW_SAMPLES - 1) {
+        out->rider = VISOR_VIEW_SAMPLES - 1;
     }
 
     visor_xy_t current[VISOR_VIEW_SAMPLES];

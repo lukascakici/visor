@@ -55,7 +55,8 @@ static const uint8_t GUIDANCE[] = {
 /* Coming from 100 m behind, straight to a junction 50 m ahead, then 120 m to
  * the right. The same three points the Swift packet tests use. */
 static const uint8_t PATH[] = {
-    0x01, 0x03, 0x01, 0x00,
+    /* Byte 3: the rider is 100 m along a 270 m line, which is 94 of 255. */
+    0x01, 0x03, 0x01, 0x5E,
     0x00, 0x00, 0x18, 0xFC,
     0x00, 0x00, 0xF4, 0x01,
     0xB0, 0x04, 0xF4, 0x01,
@@ -428,7 +429,8 @@ static void test_denser_glass(void)
 
 /* Straight ahead, no junction: 100 m of road behind and 300 m in front. */
 static const uint8_t STRAIGHT[] = {
-    0x01, 0x03, 0xFF, 0x00,
+    /* 100 m of a 400 m line is behind the rider: 64 of 255. */
+    0x01, 0x03, 0xFF, 0x40,
     0x00, 0x00, 0x18, 0xFC,
     0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0xB8, 0x0B,
@@ -472,6 +474,44 @@ static void test_the_rider_stays_visible_on_the_road(void)
 
     check(gap > 0, "a dark edge follows it");
     check(y > 0 && is_content(pixels[y * WIDTH + centre]), "and then the road resumes");
+}
+
+/* Where the road behind ends and the road ahead begins is told, not deduced.
+ *
+ * The obvious deduction is to look for the point nearest the origin, and it
+ * fails exactly where it matters: past a sharp corner the road ahead swings
+ * back across the rider and wins the comparison, so most of the way forward
+ * gets drawn as the way already ridden, and flickers between the two as the
+ * geometry shifts.
+ */
+static void test_the_rider_is_where_the_packet_says(void)
+{
+    printf("where the rider sits on the line\n");
+
+    uint8_t packet[sizeof(PATH)];
+    memcpy(packet, PATH, sizeof(PATH));
+
+    visor_path_t path;
+    visor_view_t view;
+
+    check(visor_path_decode(packet, sizeof(packet), &path), "decodes");
+    check(path.rider == 0x5E, "the byte comes through untouched");
+
+    visor_view_between(NULL, &path, 1.0f, &view);
+    check(view.rider == (int)((94.0f / 255.0f) * (VISOR_VIEW_SAMPLES - 1) + 0.5f),
+          "and lands on the sample the fraction names");
+
+    /* A fraction of a line is the same fraction however many points it is
+     * drawn with, so the ends have to be the ends. */
+    packet[3] = 0;
+    visor_path_decode(packet, sizeof(packet), &path);
+    visor_view_between(NULL, &path, 1.0f, &view);
+    check(view.rider == 0, "nothing behind means nothing drawn as behind");
+
+    packet[3] = 255;
+    visor_path_decode(packet, sizeof(packet), &path);
+    visor_view_between(NULL, &path, 1.0f, &view);
+    check(view.rider == VISOR_VIEW_SAMPLES - 1, "and all of it behind means all of it");
 }
 
 /* The layout has to hold on round glass, and the awkward case is a four figure
@@ -577,6 +617,7 @@ int main(int argc, char **argv)
     test_a_new_junction_does_not_slide();
     test_numbers();
     test_screen();
+    test_the_rider_is_where_the_packet_says();
     test_the_rider_stays_visible_on_the_road();
     test_round_glass();
     test_denser_glass();

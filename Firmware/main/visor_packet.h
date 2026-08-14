@@ -32,7 +32,7 @@
  *   byte  0      protocol version
  *   byte  1      number of points
  *   byte  2      index of the maneuver point, 255 for none
- *   byte  3      padding, zero
+ *   byte  3      where the rider is along the line, 0 to 255
  *   bytes 4...   points, each int16 right then int16 ahead, decimeters
  */
 #define VISOR_PATH_HEADER 4
@@ -94,6 +94,13 @@ typedef struct {
     uint8_t count;
     /* -1 when the packet named no junction, or named one that did not arrive. */
     int16_t maneuver_index;
+    /* How far along the points the rider is, in 255ths.
+     *
+     * Told rather than worked out. Looking for the point nearest the origin is
+     * the obvious way and it is wrong: past a sharp corner the road ahead comes
+     * back past the rider and wins, and the road still to ride gets drawn as
+     * road already ridden. */
+    uint8_t rider;
     visor_point_t points[VISOR_PATH_MAX_POINTS];
 } visor_path_t;
 

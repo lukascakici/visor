@@ -247,6 +247,33 @@ final class RoutePathTests: XCTestCase {
         XCTAssertEqual(path.points.count, 2)
     }
 
+    func testThePathSaysWhereTheRiderIsOnIt() throws {
+        let index = RouteIndex(cornerRoute())
+        // 100 m of road behind and 400 m of it ahead, so the rider is a fifth
+        // of the way along the line that gets drawn.
+        let path = index.path(at: try progress(index, at: 200), behind: 100, ahead: 400)
+
+        XCTAssertEqual(path.riderFraction, 0.2, accuracy: 0.02)
+    }
+
+    func testARoadThatDoublesBackDoesNotMoveTheRider() throws {
+        // A hairpin: the road beyond the corner comes back past the rider and
+        // ends up behind them. A display looking for the point nearest itself
+        // would find one on the far leg and call that the rider, painting the
+        // whole way forward as road already ridden. Measuring along the line
+        // cannot make that mistake.
+        let up = (0...20).map { Geo.destination(from: start, bearing: 0, distance: Double($0) * 10) }
+        let back = (1...30).map { Geo.destination(from: up[20], bearing: 183, distance: Double($0) * 10) }
+        let index = RouteIndex(Route(steps: [
+            RouteStep(polyline: up + back, distance: 500, expectedTravelTime: 60, streetName: "Destination"),
+        ]))
+
+        let path = index.path(at: try progress(index, at: 100), behind: 100, ahead: 400)
+
+        // A fifth of the way along, wherever the road wanders afterwards.
+        XCTAssertEqual(path.riderFraction, 0.2, accuracy: 0.03)
+    }
+
     // MARK: - Reach
 
     func testThePathReachesFurtherThanAnyDisplayDraws() throws {

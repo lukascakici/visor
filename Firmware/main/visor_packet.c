@@ -82,6 +82,7 @@ bool visor_path_decode(const uint8_t *data, size_t length, visor_path_t *out)
      * somewhere the road does not turn.
      */
     out->maneuver_index = data[2] < count ? (int16_t)data[2] : -1;
+    out->rider = data[3];
 
     return true;
 }

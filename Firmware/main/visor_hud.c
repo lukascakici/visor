@@ -154,15 +154,12 @@ static void render_road(const visor_canvas_t *canvas,
     float thickness = (float)canvas->width * 0.030f;
 
     visor_pt_t road[VISOR_VIEW_SAMPLES];
-    int here = 0;
     for (int index = 0; index < VISOR_VIEW_SAMPLES; index++) {
         road[index].x = visor_frame_x(&frame, view.road[index].right_m);
         road[index].y = visor_frame_y(&frame, view.road[index].ahead_m);
-
-        if (fabsf(view.road[index].ahead_m) < fabsf(view.road[here].ahead_m)) {
-            here = index;
-        }
     }
+
+    int here = view.rider;
 
     /* Road already ridden in grey, road still to ride in white. The rider is
      * the join between them, so which way they are pointing needs no arrow to
