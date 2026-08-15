@@ -102,13 +102,15 @@ there; the link can only be tried on a real iPhone.
 Needs a real iPhone, because of the above.
 
 1. On the Mac, run `VisorSim`. Wait for "Advertising, waiting for the phone".
-2. In `VisorApp`, select the Visor target, and under Signing & Capabilities
-   choose your team and change the bundle identifier to one nobody else has
-   taken.
-3. Plug the iPhone in, pick it in the device menu, and run.
-4. The pill under the search bar should go to "Connected", with a packet count
+2. Plug the iPhone in, pick it in the device menu, and run.
+3. The pill under the search bar should go to "Connected", with a packet count
    climbing once a second. The Mac window shows the same numbers, decoded from
    the bytes it received.
+
+The team and bundle identifier both apps sign with live in their `project.yml`,
+not in Signing & Capabilities. They have to: the projects are generated, so
+anything typed into that pane survives until the next `xcodegen generate` and no
+longer. To build under a different account, change them there and regenerate.
 
 Guidance keeps running with the screen off while Live GPS is the source: the app
 holds location updates in the background, which is what keeps the 1 Hz writes

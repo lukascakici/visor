@@ -58,7 +58,12 @@ targets:
           Visor connects to your heads-up display over Bluetooth to send it the next turn.
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.visor.app
+        # Signing lives here rather than being set by hand in Xcode, because
+        # the project is generated: anything typed into Signing & Capabilities
+        # is thrown away by the next `xcodegen generate`. An identifier nobody
+        # else has taken, since running on a real phone means registering it.
+        PRODUCT_BUNDLE_IDENTIFIER: com.visor.app.lukas
+        DEVELOPMENT_TEAM: B2637CWA3C
         MARKETING_VERSION: "0.1"
         CURRENT_PROJECT_VERSION: 1
         TARGETED_DEVICE_FAMILY: 1
